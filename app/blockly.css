@@ -1,0 +1,59 @@
+/*************************************
+ * Blocks
+ *************************************/
+/* buttons */
+.x1-button{
+    display: inline-flex;
+    border: none;
+    text-decoration: none;
+    align-items: center;
+    justify-content: center;
+    background-color: #eee;
+    color: #222;
+    padding: 0 20px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.x1-button:hover{
+    background-color: #ddd;
+}
+
+/* labeled inputs */
+.x1-label-input{
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+}
+
+.x1-label-input__input{
+    opacity: 0;
+    position: absolute;
+    left: -1000px;
+}
+
+/*************************************
+ * Layout
+ *************************************/
+.x1-blockly{
+    width: 100%;
+}
+
+.x1-blockly__editor{
+    height: 600px;
+    width: 100% !important;
+}
+
+.x1-blockly__actions{
+    display: flex;
+    align-items: flex-start;
+    margin-top: 3px;
+}
+
+.x1-blockly__action{
+    margin-right: 3px;
+}
+
+.x1-blockly__action:last-child{
+    margin-right: 0;
+}
