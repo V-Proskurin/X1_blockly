@@ -23,73 +23,64 @@
 
 require('dotenv').config();
 
-let config;
 
-if (process.env.MODE === 'local') {
-    config = require('./webpack.local.config');
-} else {
-    const path = require('path');
-    const webpack = require('webpack');
-    const CopyPlugin = require('copy-webpack-plugin');
-    const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
-    const BrowserSyncPlugin = require("browser-sync-webpack-plugin");
-    const TerserPlugin = require("terser-webpack-plugin");
+module.exports = env => {
+    let config;
 
-    config = {
-        resolve: {
-            fallback: {
-                "util": require.resolve("util/"),
-            }
-        },
-        target: 'web',
-        mode: 'development',
-        entry: {
-            index: './src/index.js',
-        },
-        output: {
-            path: path.resolve(__dirname, 'app'),
-            filename: 'blockly.js',
-        },
-        optimization: {
-            minimize: true,
-            minimizer: [new TerserPlugin()],
-        },
-        plugins: [
-            new webpack.optimize.ModuleConcatenationPlugin(),
-            // Copy over media resources from the Blockly package
-            new CopyPlugin([
-                {
-                    from: path.resolve(__dirname, './node_modules/blockly/media'),
-                    to: path.resolve(__dirname, 'app/media'),
-                },
-            ]),
-            new NodePolyfillPlugin(),
-            /*new BrowserSyncPlugin(
-                {
-                  host: 'localhost',
-                  port: 3000,
-                  proxy: 'http://wcfilters',
-                  files: [
-                    {
-                      match: ['./src'],
-                      fn(event, file) {
-                        if (event === 'change') {
-                          const bs = require('browser-sync').get('bs-webpack-plugin');
-                          bs.reload();
-                        }
-                      },
-                    },
-                  ],
-                },
-                {
-                  reload: false,
+    if (process.env.MODE === 'local') {
+        config = require('./webpack.local.config');
+    } else {
+        const path = require('path');
+        const webpack = require('webpack');
+        const CopyPlugin = require('copy-webpack-plugin');
+        const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+        const TerserPlugin = require("terser-webpack-plugin");
+
+
+        config = {
+            resolve: {
+                fallback: {
+                    "util": require.resolve("util/"),
                 }
-            ),*/
-        ],
-        devtool: 'source-map',
-        devServer: {},
-    };
-}
+            },
+            target: 'web',
+            mode: 'development',
+            entry: {
+                "blockly": "./src/index.js",
+                'blockly.min': "./src/index.js"
+            },
+            output: {
+                path: path.resolve(__dirname, 'app'),
+                filename: '[name].js',
+            },
+            optimization: {
+                minimize: env.production,
+                minimizer: [new TerserPlugin({
+                    terserOptions: {
+                        format: {
+                            comments: false,
+                        },
+                    },
+                    include: /\.min\.js$/,
+                    extractComments: false,
+                    parallel: true
+                })],
+            },
+            plugins: [
+                new webpack.optimize.ModuleConcatenationPlugin(),
+                // Copy over media resources from the Blockly package
+                new CopyPlugin([
+                    {
+                        from: path.resolve(__dirname, './node_modules/blockly/media'),
+                        to: path.resolve(__dirname, 'app/media'),
+                    },
+                ]),
+                new NodePolyfillPlugin()
+            ],
+            devtool: 'source-map',
+            devServer: {},
+        };
+    }
 
-
-module.exports = config;
+    return config;
+};
