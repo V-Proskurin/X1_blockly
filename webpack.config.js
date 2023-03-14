@@ -33,6 +33,7 @@ if (process.env.MODE === 'local') {
     const CopyPlugin = require('copy-webpack-plugin');
     const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
     const BrowserSyncPlugin = require("browser-sync-webpack-plugin");
+    const TerserPlugin = require("terser-webpack-plugin");
 
     config = {
         resolve: {
@@ -48,6 +49,10 @@ if (process.env.MODE === 'local') {
         output: {
             path: path.resolve(__dirname, 'app'),
             filename: 'blockly.js',
+        },
+        optimization: {
+            minimize: true,
+            minimizer: [new TerserPlugin()],
         },
         plugins: [
             new webpack.optimize.ModuleConcatenationPlugin(),
