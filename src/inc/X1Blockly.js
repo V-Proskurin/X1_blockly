@@ -4,7 +4,12 @@ import {download, getFileContent} from "./helpers";
 
 class X1Blockly {
     constructor() {
-        this.settings = {};
+        this.settings = {
+            toolbox: {
+                "kind": "categoryToolbox",
+                "contents": []
+            }
+        };
         this.plugins = [];
 
         this.updateData();
@@ -29,10 +34,11 @@ class X1Blockly {
     init(selector) {
         this.container = document.querySelector(selector);
 
-        createPlayground(this.container, (container, options) => {
+        return createPlayground(this.container, (container, options) => {
+            options.toolbox = this.settings.toolbox;
             return this.createWorkspace(container, options);
         }, {
-            debugEnabled: true,
+            debugEnabled: false,
             toolbox: this.settings.toolbox,
             grid: {
                 spacing: 25,
@@ -89,6 +95,10 @@ class X1Blockly {
         });
 
         fileinput.value = null;
+    }
+
+    addToolboxCategories(toolboxCategories){
+        this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
     }
 }
 

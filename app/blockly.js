@@ -58145,6 +58145,92 @@ module.exports = function whichTypedArray(value) {
 
 /***/ }),
 
+/***/ "./src/blocks/minecraft/acorn-minecraft.js":
+/*!*************************************************!*\
+  !*** ./src/blocks/minecraft/acorn-minecraft.js ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+var myInterpreter;
+var serverUrl = "";
+var href = serverUrl+'cmd?name=';
+var pollUrl = serverUrl+'poll?name=';
+
+function initApi(interpreter, globalObject) {
+
+  // Add an API function for the alert() block.
+  var wrapper = function alert(text) {
+    return window.alert(arguments.length ? text : '');
+  };
+  interpreter.setProperty(globalObject, 'alert',
+  interpreter.createNativeFunction(wrapper));
+  
+  // Add an API function for the pause() block.
+  wrapper = function pause(milliseconds) {    
+    const date = Date.now();
+    let currentDate = null;
+    do {
+      currentDate = Date.now();
+    } while (currentDate - date < milliseconds);    
+  };
+  interpreter.setProperty(globalObject, 'pause',
+  interpreter.createNativeFunction(wrapper));
+  
+  // Add an API function for the prompt() block.
+  wrapper = function(text) {
+    return prompt(text);
+  };
+  interpreter.setProperty(globalObject, 'prompt',
+      interpreter.createNativeFunction(wrapper));
+	  
+  // Add an API function for highlighting blocks.
+  wrapper = function(id) {
+     id = String(id || '');
+     return highlightBlock(id);
+  };
+  interpreter.setProperty(globalObject, 'highlightBlock',
+      interpreter.createNativeFunction(wrapper));
+  
+  // Add an API function for all minecraft block.
+  wrapper = function xhr(command, callback) {
+   with(new XMLHttpRequest()) {
+    open('GET', href+command, true);
+    onreadystatechange = function() {
+      if (readyState === 4 && status === 200) {
+        //callback(responseText);
+        console.log('OK - ' + href+command);
+	outputArea.value += '\nOK - ' + command;
+      }
+      if(status !== 200) {
+        console.log('CONNECT ERROR - ' + href+command);
+	outputArea.value += '\nCONNECT ERROR - ' + command;
+      }
+	  
+    };
+    send(null);
+   }
+  };
+  interpreter.setProperty(globalObject, 'xhr',
+  interpreter.createNativeFunction(wrapper));
+
+//no async getjson
+  wrapper = function getJSON(command, callback) {
+     with(new XMLHttpRequest()) {
+	open('GET', pollUrl+command, false);
+	getResponseHeader('Content-Type', 'aplication/json', 'charset=utf-8');
+	send();
+	return responseText;
+    }
+  };
+  interpreter.setProperty(globalObject, 'getJSON',
+  interpreter.createNativeFunction(wrapper));
+	
+}
+
+
+/***/ }),
+
 /***/ "./src/inc/acorn/acorn.js":
 /*!********************************!*\
   !*** ./src/inc/acorn/acorn.js ***!
@@ -64562,7 +64648,7 @@ var __webpack_exports__ = {};
 (() => {
 "use strict";
 /*!***********************************!*\
-  !*** ./src/index.js + 26 modules ***!
+  !*** ./src/index.js + 16 modules ***!
   \***********************************/
 // ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
@@ -64609,6 +64695,8 @@ __webpack_require__.d(event_test_helpers_mocha_namespaceObject, {
   "assertEventNotFired": () => (assertEventNotFired)
 });
 
+// EXTERNAL MODULE: ./node_modules/blockly/index.js
+var blockly = __webpack_require__("./node_modules/blockly/index.js");
 // EXTERNAL MODULE: ./node_modules/blockly/core-browser.js
 var core_browser = __webpack_require__("./node_modules/blockly/core-browser.js");
 // EXTERNAL MODULE: ./node_modules/@blockly/dev-tools/src/debugDrawer.js
@@ -65584,10 +65672,6 @@ globalThis.Blockly = core_browser;
 
 
 
-// EXTERNAL MODULE: ./src/inc/acorn/interpreter.js
-var interpreter = __webpack_require__("./src/inc/acorn/interpreter.js");
-// EXTERNAL MODULE: ./node_modules/blockly/index.js
-var blockly = __webpack_require__("./node_modules/blockly/index.js");
 ;// CONCATENATED MODULE: ./src/inc/helpers.js
 /* provided dependency */ var helpers_console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 function download(data, filename, type) {
@@ -65638,7 +65722,12 @@ function getFileContent(fileinput) {
 
 class X1Blockly {
     constructor() {
-        this.settings = {};
+        this.settings = {
+            toolbox: {
+                "kind": "categoryToolbox",
+                "contents": []
+            }
+        };
         this.plugins = [];
 
         this.updateData();
@@ -65663,10 +65752,11 @@ class X1Blockly {
     init(selector) {
         this.container = document.querySelector(selector);
 
-        createPlayground(this.container, (container, options) => {
+        return createPlayground(this.container, (container, options) => {
+            options.toolbox = this.settings.toolbox;
             return this.createWorkspace(container, options);
         }, {
-            debugEnabled: true,
+            debugEnabled: false,
             toolbox: this.settings.toolbox,
             grid: {
                 spacing: 25,
@@ -65724,2276 +65814,1493 @@ class X1Blockly {
 
         fileinput.value = null;
     }
+
+    addToolboxCategories(toolboxCategories){
+        this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
+    }
 }
 
 window.x1blockly = new X1Blockly();
 
 /* harmony default export */ const inc_X1Blockly = (window.x1blockly);
-;// CONCATENATED MODULE: ./node_modules/@blockly/plugin-modal/src/index.js
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview Class responsible for creating a Blockly modal.
- * @author aschmiedt@google.com (Abby Schmiedt)
- */
-
-
-
-
-/**
- * Class responsible for creating a Blockly modal.
- */
-class Modal {
-  /**
-   * Constructor for creating a Blockly modal.
-   * @param {string} title The title for the modal.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to display the modal
-   *     over.
-   */
-  constructor(title, workspace) {
-    /**
-     * The title for the modal.
-     * @type {string}
-     * @private
-     */
-    this.title_ = title;
-
-    /**
-     * The workspace to display the modal over.
-     * @type {!Blockly.WorkspaceSvg}
-     * @protected
-     */
-    this.workspace_ = workspace;
-
-    /**
-     * The last focusable element for the modal.
-     * @type {HTMLElement}
-     * @private
-     */
-    this.lastFocusableEl_ = null;
-
-    /**
-     * The first focusable element for the modal.
-     * @type {HTMLElement}
-     * @private
-     */
-    this.firstFocusableEl_ = null;
-
-    /**
-     * HTML container for the modal.
-     * @type {HTMLDivElement}
-     * @private
-     */
-    this.htmlDiv_ = null;
-
-    /**
-     * Array holding info needed to unbind events.
-     * Used for disposing.
-     * @type {!Array<!Blockly.browserEvents.Data>}
-     * @private
-     */
-    this.boundEvents_ = [];
-
-    /**
-     * If true close the modal when the user clicks outside the modal.
-     * Otherwise, only close when user hits the 'X' button or escape.
-     * @type {boolean}
-     */
-    this.shouldCloseOnOverlayClick = true;
-
-    /**
-     * If true close the modal when the user hits escape. Otherwise, do not
-     * close on escape.
-     */
-    this.shouldCloseOnEsc = true;
-  }
-
-  /**
-   * Initialize a Blockly modal.
-   */
-  init() {
-    this.render();
-  }
-
-  /**
-   * Disposes of this modal.
-   * Unlink from all DOM elements and remove all event listeners
-   * to prevent memory leaks.
-   */
-  dispose() {
-    for (const event of this.boundEvents_) {
-      core_browser.browserEvents.unbind(event);
-    }
-    this.boundEvents_.length = 0;
-    if (this.htmlDiv_) {
-      this.htmlDiv_.remove();
-    }
-  }
-
-  /**
-   * Shows the Blockly modal and focus on the first focusable element.
-   */
-  show() {
-    core_browser.WidgetDiv.show(this, this.workspace_.RTL,
-        () => this.widgetDispose_());
-    this.widgetCreate_();
-    const focusableEls = this.htmlDiv_.querySelectorAll('a[href],' +
-        'area[href], input:not([disabled]), select:not([disabled]),' +
-        'textarea:not([disabled]), button:not([disabled]), [tabindex="0"]');
-    if (focusableEls.length > 0) {
-      this.firstFocusableEl_ = focusableEls[0];
-      this.lastFocusableEl_ = focusableEls[focusableEls.length - 1];
-      if (focusableEls[0].classList.contains('blocklyModalBtnClose') &&
-          focusableEls.length > 1) {
-        focusableEls[1].focus();
-      } else {
-        this.firstFocusableEl_.focus();
-      }
-    }
-  }
-
-  /**
-   * Hide the Blockly modal.
-   */
-  hide() {
-    core_browser.WidgetDiv.hide();
-  }
-
-  /**
-   * The function to be called when the user hits the 'x' button.
-   * @protected
-   */
-  onCancel_() {
-    this.hide();
-  }
-
-  /**
-   * Add the Blockly modal to the widget div and position it properly.
-   * @protected
-   */
-  widgetCreate_() {
-    const widgetDiv = core_browser.WidgetDiv.DIV;
-    core_browser.utils.dom.addClass(this.htmlDiv_, 'blocklyModalOpen');
-    widgetDiv.appendChild(this.htmlDiv_);
-  }
-
-  /**
-   * Disposes of any events or dom-references belonging to the editor.
-   * @protected
-   */
-  widgetDispose_() {
-    core_browser.utils.dom.removeClass(this.htmlDiv_, 'blocklyModalOpen');
-  }
-
-  /**
-   * Handle when the user goes to the previous focusable element.
-   * @param {KeyboardEvent} e The keydown event.
-   * @private
-   */
-  handleBackwardTab_(e) {
-    if (document.activeElement === this.firstFocusableEl_) {
-      e.preventDefault();
-      this.lastFocusableEl_.focus();
-    }
-  }
-
-  /**
-   * Handle when the user goes to the next focusable element.
-   * @param {KeyboardEvent} e The keydown event.
-   * @private
-   */
-  handleForwardTab_(e) {
-    if (document.activeElement === this.lastFocusableEl_) {
-      e.preventDefault();
-      this.firstFocusableEl_.focus();
-    }
-  }
-
-  /**
-   * Handles keydown event for a Blockly modal. Handles forward tab, backward
-   * tab, and escape button.
-   * @param {KeyboardEvent} e The keydown event.
-   * @private
-   */
-  handleKeyDown_(e) {
-    if (e.key === 'Tab') {
-      // If there are no elements or there is one element don't wrap.
-      if (!this.firstFocusableEl_ ||
-          this.firstFocusableEl_ === this.lastFocusableEl_) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      if (e.shiftKey) {
-        this.handleBackwardTab_(e);
-      } else {
-        this.handleForwardTab_(e);
-      }
-    } else if (e.key === 'Escape' && this.shouldCloseOnEsc) {
-      this.hide();
-    }
-    e.stopPropagation();
-  }
-
-  /**
-   * Helper method for adding an event.
-   * @param {!Element} node Node upon which to listen.
-   * @param {string} name Event name to listen to (e.g. 'mousedown').
-   * @param {Object} thisObject The value of 'this' in the function.
-   * @param {!Function} func Function to call when event is triggered.
-   * @protected
-   */
-  addEvent_(node, name, thisObject, func) {
-    const event =
-        core_browser.browserEvents.conditionalBind(node, name, thisObject, func);
-    this.boundEvents_.push(event);
-  }
-
-  /**
-   * Create all the dom elements for the modal.
-   */
-  render() {
-    /*
-     * Creates the Modal. The generated modal looks like:
-     * <div class="blocklyModalContainer" role="dialog">
-     *   <header class="blocklyModalHeader">
-     *     <h2 class="blocklyModalHeaderTitle">Modal Name</h2>
-     *     <button class="blocklyModalBtn blocklyModalBtnClose">X</button>
-     *   </header>
-     *   <div class="blocklyModalContent">
-     *   </div>
-     *   <div class="blocklyModalFooter">
-     *   </div>
-     * </div>
-     */
-
-    // Create Overlay
-    this.htmlDiv_ = document.createElement('div');
-    this.htmlDiv_.className = 'blocklyModalOverlay';
-    // End Creating the Overlay
-
-    // Create Container
-    const modalContainer = document.createElement('div');
-    modalContainer.className = 'blocklyModalContainer';
-    modalContainer.setAttribute('role', 'dialog');
-    modalContainer.setAttribute('aria-labelledby', this.title_);
-    // End creating the container
-
-    // Add Events
-    this.addEvent_(/** @type{!HTMLDivElement} */ modalContainer, 'keydown',
-        this, this.handleKeyDown_);
-
-    if (this.shouldCloseOnOverlayClick) {
-      this.addEvent_(this.htmlDiv_, 'click', this, this.hide);
-      this.addEvent_(modalContainer, 'click', this, (e) => {
-        e.stopPropagation();
-      });
-    }
-
-    // Create the header
-    const modalHeader = document.createElement('header');
-    modalHeader.className = 'blocklyModalHeader';
-
-    this.renderHeader_(modalHeader);
-
-    const exitButton = document.createElement('button');
-    exitButton.className = 'blocklyModalBtn blocklyModalBtnClose';
-    this.addEvent_(exitButton, 'click', this, this.onCancel_);
-    modalHeader.appendChild(exitButton);
-    // End create header
-
-    // Create content
-    const modalContent = document.createElement('div');
-    modalContent.className = 'blocklyModalContent';
-    this.renderContent_(modalContent);
-    // End creating content
-
-    // Create Footer
-    const modalFooter = document.createElement('footer');
-    modalFooter.className = 'blocklyModalFooter';
-
-    this.renderFooter_(modalFooter);
-    // End creating footer
-
-    modalContainer.appendChild(modalHeader);
-    modalContainer.appendChild(modalContent);
-    modalContainer.appendChild(modalFooter);
-    this.htmlDiv_.appendChild(modalContainer);
-  }
-
-  /**
-   * Render content for the modal header.
-   * @param {HTMLElement} headerContainer The modal's header div.
-   * @protected
-   */
-  renderHeader_(headerContainer) {
-    const modalTitle = document.createElement('h2');
-    modalTitle.className = 'blocklyModalHeaderTitle';
-    modalTitle.appendChild(document.createTextNode(this.title_));
-    headerContainer.appendChild(modalTitle);
-  }
-
-  /**
-   * Render content for the modal content div.
-   * @param {HTMLDivElement} _contentContainer The modal's content div.
-   * @protected
-   */
-  renderContent_(_contentContainer) {
-    // No-op on the base class.
-  }
-
-  /**
-   * Render content for the modal footer.
-   * @param {HTMLElement} _footerContainer The modal's footer div.
-   * @protected
-   */
-  renderFooter_(_footerContainer) {
-    // No-op on the base class.
-  }
-}
-
-core_browser.Css.register(`
-.blocklyModalOverlay {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  position: fixed;
-}
-.blocklyModalContainer {
-  background-color: #fff;
-  border: 1px solid gray;
-  font-family: Helvetica;
-  font-weight: 300;
-  padding: 1em;
-  width: 400px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  box-shadow: 0px 10px 20px grey;
-  z-index: 100;
-  margin: 15% auto;
-}
-.blocklyModalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.blocklyModalHeaderTitle {
-  margin-top: 0;
-  margin-bottom: 0;
-  font-size: 1.2em;
-  line-height: 1.25;
-}
-.blocklyModalHeader .blocklyModalBtn {
-  margin-left: auto;
-  height: fit-content;
-}
-.blocklyModalBtnClose:before {
-  content: "\\2715";
-}
-.blocklyModalBtn {
-  margin-right: 0.5em;
-  border: 1px solid gray;
-  font-weight: 500;
-  color: gray;
-  border-radius: 25px;
-}
-.blocklyModalBtnPrimary {
-  background-color: gray;
-  color: #fff;
-}
-`);
-
-;// CONCATENATED MODULE: ./src/addons/BasePlugin.js
-class BasePlugin {
-    constructor(x1blockly) {
-        //change settings of x1blockly
-    }
-
-    init(x1blockly) {
-        //workspace already exists
-    }
-}
-;// CONCATENATED MODULE: ./src/addons/ModalPlugin.js
-
-
-
-class ModalPlugin extends BasePlugin {
-    constructor() {
-        super();
-
-    }
-
-    init(x1blockly) {
-        const modal = new Modal('Test Modal', x1blockly.workspace);
-        modal.init();
-        //modal.show();
-    }
-}
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/options.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview Typedefs and utility methods for parsing options for the
- * backpack plugin.
- * @author kozbial@google.com (Monica Kozbial)
- */
-
-/**
- * @typedef {{
- *   emptyBackpack:(boolean|undefined),
- *   removeFromBackpack:(boolean|undefined),
- *   copyToBackpack:(boolean|undefined),
- *   copyAllToBackpack:(boolean|undefined),
- *   pasteAllToBackpack:(boolean|undefined),
- *   disablePreconditionChecks:(boolean|undefined)
- * }}
- */
-let BackpackContextMenuOptions;
-
-/**
- * @typedef {{
- *    allowEmptyBackpackOpen: (boolean|undefined),
- *    useFilledBackpackImage: (boolean|undefined),
- *    contextMenu:(!BackpackContextMenuOptions|undefined)
- * }}
- */
-let BackpackOptions;
-
-/**
- * Returns a new options object with all properties set, using default values
- * if not specified in the optional options that were passed in.
- * @param {BackpackOptions=} options The options to use.
- * @returns {!BackpackOptions} The created options object.
- */
-function parseOptions(options) {
-  const defaults = {
-    allowEmptyBackpackOpen: true,
-    useFilledBackpackImage: false,
-    contextMenu: {
-      emptyBackpack: true,
-      removeFromBackpack: true,
-      copyToBackpack: true,
-      copyAllToBackpack: false,
-      pasteAllToBackpack: false,
-      disablePreconditionChecks: false,
+// EXTERNAL MODULE: ./src/inc/acorn/interpreter.js
+var interpreter = __webpack_require__("./src/inc/acorn/interpreter.js");
+;// CONCATENATED MODULE: ./src/blocks/toolbox.js
+/* harmony default export */ const toolbox = ([
+    {
+        "kind": "category",
+        "name": "Логика",
+        "categorystyle": "logic_category",
+        "contents": [
+            {
+                "kind": "block",
+                "type": "controls_if"
+            },
+            {
+                "kind": "block",
+                "type": "logic_compare"
+            },
+            {
+                "kind": "block",
+                "type": "logic_operation"
+            },
+            {
+                "kind": "block",
+                "type": "logic_negate"
+            },
+            {
+                "kind": "block",
+                "type": "logic_boolean"
+            }
+        ]
     },
-  };
-
-  if (!options) {
-    return defaults;
-  }
-
-  return {
-    allowEmptyBackpackOpen:
-        options.allowEmptyBackpackOpen ?? defaults.allowEmptyBackpackOpen,
-    useFilledBackpackImage:
-        options.useFilledBackpackImage ?? defaults.useFilledBackpackImage,
-    contextMenu: {
-      ...defaults.contextMenu,
-      ...options.contextMenu,
+    {
+        "kind": "category",
+        "name": "Циклы",
+        "colour": "120",
+        "contents": [
+            {
+                "kind": "block",
+                "type": "controls_repeat_ext"
+            },
+            {
+                "kind": "block",
+                "type": "controls_whileUntil"
+            },
+            {
+                "kind": "block",
+                "type": "controls_for",
+                "inputs": {
+                    "FROM": {
+                        "block": {
+                            "type": "math_number",
+                            "fields": {
+                                "NUM": 1
+                            }
+                        }
+                    },
+                    "TO": {
+                        "block": {
+                            "type": "math_number",
+                            "fields": {
+                                "NUM": 10
+                            }
+                        }
+                    },
+                    "BY": {
+                        "block": {
+                            "type": "math_number",
+                            "fields": {
+                                "NUM": 1
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "kind": "block",
+                "type": "controls_forEach"
+            },
+            {
+                "kind": "block",
+                "type": "controls_flow_statements"
+            }
+        ]
     },
-  };
-}
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/msg.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview Translatable messages used in backpack.
- * @author kozbial@google.com (Monica Kozbial)
- */
-
-
-
-/** @type {string} */
-// context menu - Copy all Blocks on the workspace to the backpack.
-core_browser.Msg.COPY_ALL_TO_BACKPACK = 'Copy All Blocks to Backpack';
-/** @type {string} */
-// context menu - Copy the selected Block to the backpack.
-core_browser.Msg.COPY_TO_BACKPACK = 'Copy to Backpack';
-/** @type {string} */
-// context menu - Empty the backpack.
-core_browser.Msg.EMPTY_BACKPACK = 'Empty';
-/** @type {string} */
-// context menu - Paste all Blocks from the backpack to the workspace.
-core_browser.Msg.PASTE_ALL_FROM_BACKPACK = 'Paste All Blocks from Backpack';
-/** @type {string} */
-// context menu - Remove the selected Block from the backpack.
-core_browser.Msg.REMOVE_FROM_BACKPACK = 'Remove from Backpack';
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/backpack_helpers.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview Helper and utility methods for the backpack plugin.
- * @author kozbial@google.com (Monica Kozbial)
- */
-
-
-
-
-
-/**
- * Registers a context menu option to empty the backpack when right-clicked.
- * @param {!Blockly.WorkspaceSvg} workspace The workspace to register the
- *   context menu option on.
- */
-function registerEmptyBackpack(workspace) {
-  const prevConfigureContextMenu = workspace.configureContextMenu;
-  workspace.configureContextMenu = (menuOptions, e) => {
-    const backpack = workspace.getComponentManager().getComponent('backpack');
-    if (!backpack || !backpack.getClientRect().contains(e.clientX, e.clientY)) {
-      prevConfigureContextMenu &&
-      prevConfigureContextMenu.call(null, menuOptions, e);
-      return;
-    }
-    menuOptions.length = 0;
-    const backpackOptions = {
-      text: core_browser.Msg.EMPTY_BACKPACK,
-      enabled: !!backpack.getCount(),
-      callback: function() {
-        backpack.empty();
-      },
-    };
-    menuOptions.push(backpackOptions);
-  };
-}
-
-/**
- * Registers a context menu option to remove a block from a backpack flyout.
- */
-function registerRemoveFromBackpack() {
-  if (core_browser.ContextMenuRegistry.registry.getItem('remove_from_backpack')) {
-    return;
-  }
-  const removeFromBackpack = {
-    displayText: core_browser.Msg.REMOVE_FROM_BACKPACK,
-    preconditionFn: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.block.workspace;
-      if (ws.isFlyout && ws.targetWorkspace) {
-        const backpack =
-            ws.targetWorkspace.getComponentManager().getComponent('backpack');
-        if (backpack && backpack.getFlyout().getWorkspace().id === ws.id) {
-          return 'enabled';
-        }
-      }
-      return 'hidden';
+    {
+        "kind": "category",
+        "name": "Математика",
+        "colour": "230",
+        "contents": [
+            {
+                "kind": "block",
+                "type": "math_number",
+                "fields": {
+                    "NUM": 42
+                }
+            },
+            {
+                "kind": "block",
+                "type": "math_arithmetic",
+                "fields": {
+                    "OP": "ADD"
+                },
+                "inputs": {
+                    "A": {
+                        "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                                "NUM": 1
+                            }
+                        }
+                    },
+                    "B": {
+                        "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                                "NUM": 1
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "kind": "block",
+                "type": "math_single"
+            },
+            {
+                "kind": "block",
+                "type": "math_trig"
+            },
+            {
+                "kind": "block",
+                "type": "math_constant"
+            },
+            {
+                "kind": "block",
+                "type": "math_change"
+            },
+            {
+                "kind": "block",
+                "type": "math_round"
+            },
+            {
+                "kind": "block",
+                "type": "math_on_list"
+            },
+            {
+                "kind": "block",
+                "type": "math_modulo"
+            },
+            {
+                "kind": "block",
+                "type": "math_constrain"
+            },
+            {
+                "kind": "block",
+                "type": "math_random_int"
+            },
+            {
+                "kind": "block",
+                "type": "math_random_float"
+            }
+        ]
     },
-    callback: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const backpack =scope.block.workspace.targetWorkspace
-          .getComponentManager().getComponent('backpack');
-      backpack.removeBlock(scope.block);
+    {
+        "kind": "category",
+        "name": "Текст",
+        "colour": "160",
+        "contents": [
+            {
+                "kind": "block",
+                "type": "text"
+            },
+            {
+                "kind": "block",
+                "type": "text_join"
+            },
+            {
+                "kind": "block",
+                "type": "text_append"
+            },
+            {
+                "kind": "block",
+                "type": "text_length"
+            },
+            {
+                "kind": "block",
+                "type": "text_isEmpty"
+            },
+            {
+                "kind": "block",
+                "type": "text_indexOf"
+            },
+            {
+                "kind": "block",
+                "type": "text_charAt"
+            },
+            {
+                "kind": "block",
+                "type": "text_getSubstring"
+            },
+            {
+                "kind": "block",
+                "type": "text_changeCase"
+            },
+            {
+                "kind": "block",
+                "type": "text_trim"
+            },
+            {
+                "kind": "block",
+                "type": "text_print"
+            },
+            {
+                "kind": "block",
+                "type": "text_prompt_ext"
+            }
+        ]
     },
-    scopeType: core_browser.ContextMenuRegistry.ScopeType.BLOCK,
-    id: 'remove_from_backpack',
-    // Use a larger weight to push the option lower on the context menu.
-    weight: 200,
-  };
-  core_browser.ContextMenuRegistry.registry.register(removeFromBackpack);
-}
-
-/**
- * Registers context menu options for adding a block to the backpack.
- * @param {boolean} disablePreconditionContainsCheck Whether to disable the
- *   precondition check for whether the backpack contains the block.
- */
-function registerCopyToBackpack(disablePreconditionContainsCheck) {
-  if (core_browser.ContextMenuRegistry.registry.getItem('copy_to_backpack')) {
-    return;
-  }
-  const copyToBackpack = {
-    displayText: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      if (!scope.block) {
-        return;
-      }
-      const backpack = scope.block.workspace.getComponentManager()
-          .getComponent('backpack');
-      const backpackCount = backpack.getCount();
-      return `${core_browser.Msg.COPY_TO_BACKPACK} (${backpackCount})`;
+    {
+        "kind": "category",
+        "name": "Переменные",
+        "custom": "VARIABLE",
+        "colour": "330"
     },
-    preconditionFn: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.block.workspace;
-      if (!ws.isFlyout) {
-        const backpack = ws.getComponentManager().getComponent('backpack');
-        if (backpack) {
-          if (disablePreconditionContainsCheck) {
-            return 'enabled';
-          }
-          return backpack.containsBlock(scope.block) ? 'disabled' : 'enabled';
-        }
-      }
-      return 'hidden';
+    {
+        "kind": "category",
+        "name": "Функции",
+        "custom": "PROCEDURE",
+        "colour": "290"
     },
-    callback: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const backpack =
-          scope.block.workspace.getComponentManager().getComponent('backpack');
-      backpack.addBlock(scope.block);
+    {
+        "kind": "category",
+        "name": "Палитра",
+        "custom": "COLOUR_PALETTE",
+        "colour": "22"
     },
-    scopeType: core_browser.ContextMenuRegistry.ScopeType.BLOCK,
-    id: 'copy_to_backpack',
-    // Use a larger weight to push the option lower on the context menu.
-    weight: 200,
-  };
-  core_browser.ContextMenuRegistry.registry.register(copyToBackpack);
-}
+]);
+// EXTERNAL MODULE: ./src/blocks/minecraft/acorn-minecraft.js
+var acorn_minecraft = __webpack_require__("./src/blocks/minecraft/acorn-minecraft.js");
+;// CONCATENATED MODULE: ./src/blocks/minecraft/define.js
 
-/**
- * Registers context menu options for copying all blocks from the workspace to
- * the backpack.
- */
-function registerCopyAllBackpack() {
-  if (core_browser.ContextMenuRegistry.registry.getItem('copy_all_to_backpack')) {
-    return;
-  }
-  const copyAllToBackpack = {
-    displayText: core_browser.Msg.COPY_ALL_TO_BACKPACK,
-    preconditionFn: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.workspace;
-      if (!ws.isFlyout) {
-        const backpack = ws.getComponentManager().getComponent('backpack');
-        if (backpack) {
-          return 'enabled';
-        }
-      }
-      return 'hidden';
-    },
-    callback: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.workspace;
-      const backpack = ws.getComponentManager().getComponent('backpack');
-      backpack.addBlocks(ws.getTopBlocks());
-    },
-    scopeType: core_browser.ContextMenuRegistry.ScopeType.WORKSPACE,
-    id: 'copy_all_to_backpack',
-    // Use a larger weight to push the option lower on the context menu.
-    weight: 200,
-  };
-  core_browser.ContextMenuRegistry.registry.register(copyAllToBackpack);
-}
 
-/**
- * Registers context menu options for pasting all blocks from the backpack to
- * the workspace.
- */
-function registerPasteAllBackpack() {
-  if (core_browser.ContextMenuRegistry.registry.getItem('paste_all_from_backpack')) {
-    return;
-  }
-  const pasteAllFromBackpack = {
-    displayText: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      if (!scope.workspace) {
-        return;
-      }
-      const backpack =
-          scope.workspace.getComponentManager().getComponent('backpack');
-      const backpackCount = backpack.getCount();
-      return `${core_browser.Msg.PASTE_ALL_FROM_BACKPACK} (${backpackCount})`;
-    },
-    preconditionFn: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.workspace;
-      if (!ws.isFlyout) {
-        const backpack = ws.getComponentManager().getComponent('backpack');
-        if (backpack) {
-          return 'enabled';
-        }
-      }
-      return 'hidden';
-    },
-    callback: function(
-        /** @type {!Blockly.ContextMenuRegistry.Scope} */ scope) {
-      const ws = scope.workspace;
-      const backpack = ws.getComponentManager().getComponent('backpack');
-      const contents = backpack.getContents();
-      contents.forEach((blockText) => {
-        const block =
-            core_browser.Xml.domToBlock(core_browser.Xml.textToDom(blockText), ws);
-        block.scheduleSnapAndBump();
-      });
-    },
-    scopeType: core_browser.ContextMenuRegistry.ScopeType.WORKSPACE,
-    id: 'paste_all_from_backpack',
-    // Use a larger weight to push the option lower on the context menu.
-    weight: 200,
-  };
-  core_browser.ContextMenuRegistry.registry.register(pasteAllFromBackpack);
-}
-
-/**
- * Register all context menu options.
- * @param {!BackpackContextMenuOptions} contextMenuOptions The backpack context
- *    menu options.
- * @param {!Blockly.WorkspaceSvg} workspace The workspace to register the
- *    context menu options.
- */
-function registerContextMenus(contextMenuOptions, workspace) {
-  if (contextMenuOptions.emptyBackpack) {
-    registerEmptyBackpack(workspace);
-  }
-  if (contextMenuOptions.removeFromBackpack) {
-    registerRemoveFromBackpack();
-  }
-  if (contextMenuOptions.copyToBackpack) {
-    registerCopyToBackpack(
-        contextMenuOptions.disablePreconditionChecks);
-  }
-  if (contextMenuOptions.copyAllToBackpack) {
-    registerCopyAllBackpack();
-  }
-  if (contextMenuOptions.pasteAllToBackpack) {
-    registerPasteAllBackpack();
-  }
-}
-
-/**
- * Converts XML representing a block into text that can be stored in the
- * content array.
- * @param {!Element} xml An XML tree defining the block and any
- *    connected child blocks.
- * @returns {string} Text representing the XML tree, cleaned of all unnecessary
- * attributes.
- */
-function cleanBlockXML(xml) {
-  const xmlBlock = xml.cloneNode(true);
-  let node = xmlBlock;
-  while (node) {
-    // Things like text inside tags are still treated as nodes, but they
-    // don't have attributes (or the removeAttribute function) so we can
-    // skip removing attributes from them.
-    if (node.removeAttribute) {
-      node.removeAttribute('x');
-      node.removeAttribute('y');
-      node.removeAttribute('id');
-      node.removeAttribute('disabled');
-      if (node.nodeName == 'comment') {
-        node.removeAttribute('h');
-        node.removeAttribute('w');
-        node.removeAttribute('pinned');
-      }
+blockly.Blocks.minecraft_connect = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Инициализировать")
+            .appendField("Личный мир")
+            .appendField(new blockly.FieldCheckbox("FALSE"), "world")
+            .appendField("мобы")
+            .appendField(new blockly.FieldCheckbox("FALSE"), "mob");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(255);
+        this.setTooltip("Главный блок программы. Устанавливает соединение с сервером и настраивает начальные данные");
+        this.setHelpUrl("");
     }
-
-    // Try to go down the tree
-    let nextNode = node.firstChild || node.nextSibling;
-    // If we can't go down, try to go back up the tree.
-    if (!nextNode) {
-      nextNode = node.parentNode;
-      while (nextNode) {
-        // We are valid again!
-        if (nextNode.nextSibling) {
-          nextNode = nextNode.nextSibling;
-          break;
-        }
-        // Try going up again. If parentNode is null that means we have
-        // reached the top, and we will break out of both loops.
-        nextNode = nextNode.parentNode;
-      }
-    }
-    node = nextNode;
-  }
-  return core_browser.Xml.domToText(xmlBlock);
-}
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/ui_events.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview UI events used for the backpack plugin.
- * @author kozbial@google.com (Monica Kozbial)
- */
-
-
-
-/**
- * Name of event that records a backpack open.
- * @const
- */
-const BACKPACK_OPEN = 'backpack_open';
-
-/**
- * A UI event representing a backpack opening or closing.
- */
-class BackpackOpen extends core_browser.Events.UiBase {
-  /**
-   * Class for a backpack open event.
-   * @param {boolean=} isOpen Whether the backpack flyout is opening (false
-   *    if closing). Undefined for a blank event.
-   * @param {string=} workspaceId The workspace identifier for this event.
-   *    Undefined for a blank event.
-   * @extends {Blockly.Events.UiBase}
-   * @constructor
-   */
-  constructor(isOpen, workspaceId) {
-    super(workspaceId);
-
-    /**
-     * Whether the backpack flyout is opening (false if closing).
-     * @type {boolean|undefined}
-     */
-    this.isOpen = isOpen;
-
-    /**
-     * Type of this event.
-     * @type {string}
-     */
-    this.type = BACKPACK_OPEN;
-  }
-
-  /**
-   * Encode the event as JSON.
-   * @returns {!Object} JSON representation.
-   */
-  toJson() {
-    const json = super.toJson();
-    json['isOpen'] = this.isOpen;
-    return json;
-  }
-
-  /**
-   * Decode the JSON event.
-   * @param {!Object} json JSON representation.
-   */
-  fromJson(json) {
-    super.fromJson(json);
-    this.isOpen = json['isOpen'];
-  }
-}
-
-core_browser.registry.register(core_browser.registry.Type.EVENT, BACKPACK_OPEN,
-    BackpackOpen);
-
-/**
- * Name of event that records a backpack change.
- * @const
- */
-const BACKPACK_CHANGE = 'backpack_change';
-
-/**
- * A UI event representing a change in a backpack's contents.
- */
-class BackpackChange extends core_browser.Events.UiBase {
-  /**
-   * Class for a backpack change event.
-   * @param {string=} workspaceId The workspace identifier for this event.
-   *    Undefined for a blank event.
-   * @extends {Blockly.Events.UiBase}
-   * @constructor
-   */
-  constructor(workspaceId) {
-    super(workspaceId);
-
-    /**
-     * Type of this event.
-     * @type {string}
-     */
-    this.type = BACKPACK_CHANGE;
-  }
-}
-
-core_browser.registry.register(core_browser.registry.Type.EVENT, BACKPACK_CHANGE,
-    BackpackChange);
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/backpack.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview A backpack that lives on top of the workspace.
- * @author kozbial@google.com (Monica Kozbial)
- */
-
-
-
-
-
-
-/**
- * Class for backpack that can be used save blocks from the workspace for
- * future use.
- * @param {!Blockly.WorkspaceSvg} workspace The workspace to sit in.
- * @implements {Blockly.IAutoHideable}
- * @implements {Blockly.IPositionable}
- * @extends {Blockly.DragTarget}
- */
-class Backpack extends core_browser.DragTarget {
-  /**
-   * Constructor for a backpack.
-   * @param {!Blockly.WorkspaceSvg} targetWorkspace The target workspace that
-   *     the backpack will be added to.
-   * @param {!BackpackOptions=} backpackOptions The backpack options to use.
-   */
-  constructor(targetWorkspace, backpackOptions) {
-    super();
-
-    /**
-     * The workspace.
-     * @type {!Blockly.WorkspaceSvg}
-     * @protected
-     */
-    this.workspace_ = targetWorkspace;
-
-    /**
-     * The unique id for this component.
-     * @type {string}
-     */
-    this.id = 'backpack';
-
-    /**
-     * The backpack options.
-     * @type {!BackpackOptions}
-     */
-    this.options_ = parseOptions(backpackOptions);
-
-    /**
-     * The backpack flyout. Initialized during init.
-     * @type {?Blockly.IFlyout}
-     * @protected
-     */
-    this.flyout_ = null;
-
-    /**
-     * A list of XML (stored as strings) representing blocks in the backpack.
-     * @type {!Array<string>}
-     * @protected
-     */
-    this.contents_ = [];
-
-    /**
-     * Array holding info needed to unbind events.
-     * Used for disposing.
-     * @type {!Array<!Blockly.browserEvents.Data>}
-     * @private
-     */
-    this.boundEvents_ = [];
-
-    /**
-     * Left coordinate of the backpack.
-     * @type {number}
-     * @protected
-     */
-    this.left_ = 0;
-
-    /**
-     * Top coordinate of the backpack.
-     * @type {number}
-     * @protected
-     */
-    this.top_ = 0;
-
-    /**
-     * Width of the backpack. Used for clip path.
-     * @type {number}
-     * @const
-     * @protected
-     */
-    this.WIDTH_ = 40;
-
-    /**
-     * Height of the backpack. Used for clip path.
-     * @type {number}
-     * @const
-     * @protected
-     */
-    this.HEIGHT_ = 60;
-
-    /**
-     * Distance between backpack and bottom or top edge of workspace.
-     * @type {number}
-     * @const
-     * @protected
-     */
-    this.MARGIN_VERTICAL_ = 20;
-
-    /**
-     * Distance between backpack and right or left edge of workspace.
-     * @type {number}
-     * @const
-     * @protected
-     */
-    this.MARGIN_HORIZONTAL_ = 20;
-
-    /**
-     * Extent of hotspot on all sides beyond the size of the image.
-     * @const {number}
-     * @protected
-     */
-    this.HOTSPOT_MARGIN_ = 10;
-
-    /**
-     * The SVG group containing the backpack.
-     * @type {?SVGElement}
-     * @protected
-     */
-    this.svgGroup_ = null;
-
-    /**
-     * Top offset for backpack in svg.
-     * @type {number}
-     * @private
-     */
-    this.SPRITE_TOP_ = 10;
-
-    /**
-     * Left offset for backpack in svg.
-     * @type {number}
-     * @private
-     */
-    this.SPRITE_LEFT_ = 20;
-
-    /**
-     * Width/Height of svg.
-     * @type {number}
-     * @const
-     * @private
-     */
-    this.SPRITE_SIZE_ = 80;
-  }
-
-  /**
-   * Initializes the backpack.
-   */
-  init() {
-    this.workspace_.getComponentManager().addComponent({
-      component: this,
-      weight: 2,
-      capabilities: [
-        core_browser.ComponentManager.Capability.AUTOHIDEABLE,
-        core_browser.ComponentManager.Capability.DRAG_TARGET,
-        core_browser.ComponentManager.Capability.POSITIONABLE,
-      ],
-    });
-    this.initFlyout_();
-    this.createDom_();
-    this.attachListeners_();
-    registerContextMenus(
-        /** @type {!BackpackContextMenuOptions} */ this.options_.contextMenu,
-        this.workspace_);
-    this.initialized_ = true;
-    this.workspace_.resize();
-  }
-
-  /**
-   * Disposes of workspace search.
-   * Unlink from all DOM elements and remove all event listeners
-   * to prevent memory leaks.
-   */
-  dispose() {
-    if (this.svgGroup_) {
-      core_browser.utils.dom.removeNode(this.svgGroup_);
-    }
-    for (const event of this.boundEvents_) {
-      core_browser.browserEvents.unbind(event);
-    }
-    this.boundEvents_.length = 0;
-  }
-
-  /**
-   * Creates and initializes the flyout and inserts it into the dom.
-   * @protected
-   */
-  initFlyout_() {
-    // Create flyout options.
-    const flyoutWorkspaceOptions = new core_browser.Options(
-        /** @type {!Blockly.BlocklyOptions} */
-        ({
-          'scrollbars': true,
-          'parentWorkspace': this.workspace_,
-          'rtl': this.workspace_.RTL,
-          'oneBasedIndex': this.workspace_.options.oneBasedIndex,
-          'renderer': this.workspace_.options.renderer,
-          'rendererOverrides': this.workspace_.options.rendererOverrides,
-          'move': {
-            'scrollbars': true,
-          },
-        }));
-    // Create vertical or horizontal flyout.
-    if (this.workspace_.horizontalLayout) {
-      flyoutWorkspaceOptions.toolboxPosition =
-          (this.workspace_.toolboxPosition ===
-              core_browser.utils.toolbox.Position.TOP) ?
-              core_browser.utils.toolbox.Position.BOTTOM :
-              core_browser.utils.toolbox.Position.TOP;
-      const HorizontalFlyout = core_browser.registry.getClassFromOptions(
-          core_browser.registry.Type.FLYOUTS_HORIZONTAL_TOOLBOX,
-          this.workspace_.options, true);
-      this.flyout_ = new HorizontalFlyout(flyoutWorkspaceOptions);
-    } else {
-      flyoutWorkspaceOptions.toolboxPosition =
-          (this.workspace_.toolboxPosition ===
-              core_browser.utils.toolbox.Position.RIGHT) ?
-              core_browser.utils.toolbox.Position.LEFT :
-              core_browser.utils.toolbox.Position.RIGHT;
-      const VerticalFlyout = core_browser.registry.getClassFromOptions(
-          core_browser.registry.Type.FLYOUTS_VERTICAL_TOOLBOX,
-          this.workspace_.options, true);
-      this.flyout_ = new VerticalFlyout(flyoutWorkspaceOptions);
-    }
-    // Add flyout to DOM.
-    const parentNode = this.workspace_.getParentSvg().parentNode;
-    parentNode.appendChild(this.flyout_.createDom(core_browser.utils.Svg.SVG));
-    this.flyout_.init(this.workspace_);
-  }
-
-  /**
-   * Creates DOM for UI element.
-   * @protected
-   */
-  createDom_() {
-    this.svgGroup_ = core_browser.utils.dom.createSvgElement(
-        core_browser.utils.Svg.G, {}, null);
-    const rnd = core_browser.utils.idGenerator.genUid();
-    const clip = core_browser.utils.dom.createSvgElement(
-        core_browser.utils.Svg.CLIPPATH,
-        {'id': 'blocklyBackpackClipPath' + rnd},
-        this.svgGroup_);
-    core_browser.utils.dom.createSvgElement(
-        core_browser.utils.Svg.RECT,
-        {
-          'width': this.WIDTH_,
-          'height': this.HEIGHT_,
-        },
-        clip);
-    this.svgImg_ = core_browser.utils.dom.createSvgElement(
-        core_browser.utils.Svg.IMAGE,
-        {
-          'class': 'blocklyBackpack',
-          'clip-path': 'url(#blocklyBackpackClipPath' + rnd + ')',
-          'width': this.SPRITE_SIZE_ + 'px',
-          'x': -this.SPRITE_LEFT_,
-          'height': this.SPRITE_SIZE_ + 'px',
-          'y': -this.SPRITE_TOP_,
-        },
-        this.svgGroup_);
-    this.svgImg_.setAttributeNS(core_browser.utils.dom.XLINK_NS, 'xlink:href',
-        BACKPACK_SVG_DATAURI);
-
-    core_browser.utils.dom.insertAfter(
-        this.svgGroup_, this.workspace_.getBubbleCanvas());
-  }
-
-  /**
-   * Attaches event listeners.
-   * @protected
-   */
-  attachListeners_() {
-    this.addEvent_(
-        this.svgGroup_, 'mousedown', this, this.blockMouseDownWhenOpenable_);
-    this.addEvent_(
-        this.svgGroup_, 'mouseup', this, this.onClick_);
-    this.addEvent_(
-        this.svgGroup_, 'mouseover', this, this.onMouseOver_);
-    this.addEvent_(
-        this.svgGroup_, 'mouseout', this, this.onMouseOut_);
-  }
-
-  /**
-   * Helper method for adding an event.
-   * @param {!Element} node Node upon which to listen.
-   * @param {string} name Event name to listen to (e.g. 'mousedown').
-   * @param {Object} thisObject The value of 'this' in the function.
-   * @param {!Function} func Function to call when event is triggered.
-   * @private
-   */
-  addEvent_(node, name, thisObject, func) {
-    const event = core_browser.browserEvents.bind(node, name, thisObject, func);
-    this.boundEvents_.push(event);
-  }
-
-  /**
-   * Returns the backpack flyout.
-   * @returns {?Blockly.IFlyout} The backpack flyout.
-   * @public
-   */
-  getFlyout() {
-    return this.flyout_;
-  }
-
-  /**
-   * Returns the bounding rectangle of the drag target area in pixel units
-   * relative to viewport.
-   * @returns {?Blockly.utils.Rect} The component's bounding box. Null if drag
-   *   target area should be ignored.
-   */
-  getClientRect() {
-    if (!this.svgGroup_) {
-      return null;
-    }
-
-    const clientRect = this.svgGroup_.getBoundingClientRect();
-    const top = clientRect.top + this.SPRITE_TOP_ - this.HOTSPOT_MARGIN_;
-    const bottom = top + this.HEIGHT_ + 2 * this.HOTSPOT_MARGIN_;
-    const left = clientRect.left + this.SPRITE_LEFT_ - this.HOTSPOT_MARGIN_;
-    const right = left + this.WIDTH_ + 2 * this.HOTSPOT_MARGIN_;
-    return new core_browser.utils.Rect(top, bottom, left, right);
-  }
-
-  /**
-   * Returns the bounding rectangle of the UI element in pixel units relative to
-   * the Blockly injection div.
-   * @returns {!Blockly.utils.Rect} The component’s bounding box.
-   */
-  getBoundingRectangle() {
-    return new core_browser.utils.Rect(
-        this.top_, this.top_ + this.HEIGHT_,
-        this.left_, this.left_ + this.WIDTH_);
-  }
-
-  /**
-   * Positions the backpack.
-   * It is positioned in the opposite corner to the corner the
-   * categories/toolbox starts at.
-   * @param {!Blockly.MetricsManager.UiMetrics} metrics The workspace metrics.
-   * @param {!Array<!Blockly.utils.Rect>} savedPositions List of rectangles that
-   *     are already on the workspace.
-   */
-  position(metrics, savedPositions) {
-    if (!this.initialized_) {
-      return;
-    }
-    const hasVerticalScrollbars = this.workspace_.scrollbar &&
-        this.workspace_.scrollbar.canScrollHorizontally();
-    const hasHorizontalScrollbars = this.workspace_.scrollbar &&
-        this.workspace_.scrollbar.canScrollVertically();
-
-    if (metrics.toolboxMetrics.position === core_browser.TOOLBOX_AT_LEFT ||
-        (this.workspace_.horizontalLayout && !this.workspace_.RTL)) {
-      // Right corner placement.
-      this.left_ = metrics.absoluteMetrics.left + metrics.viewMetrics.width -
-          this.WIDTH_ - this.MARGIN_HORIZONTAL_;
-      if (hasVerticalScrollbars && !this.workspace_.RTL) {
-        this.left_ -= core_browser.Scrollbar.scrollbarThickness;
-      }
-    } else {
-      // Left corner placement.
-      this.left_ = this.MARGIN_HORIZONTAL_;
-      if (hasVerticalScrollbars && this.workspace_.RTL) {
-        this.left_ += core_browser.Scrollbar.scrollbarThickness;
-      }
-    }
-
-    const startAtBottom =
-        metrics.toolboxMetrics.position === core_browser.TOOLBOX_AT_BOTTOM;
-    if (startAtBottom) {
-      // Bottom corner placement
-      this.top_ = metrics.absoluteMetrics.top + metrics.viewMetrics.height -
-          this.HEIGHT_ - this.MARGIN_VERTICAL_;
-      if (hasHorizontalScrollbars) {
-        // The horizontal scrollbars are always positioned on the bottom.
-        this.top_ -= core_browser.Scrollbar.scrollbarThickness;
-      }
-    } else {
-      // Upper corner placement
-      this.top_ = metrics.absoluteMetrics.top + this.MARGIN_VERTICAL_;
-    }
-
-    // Check for collision and bump if needed.
-    let boundingRect = this.getBoundingRectangle();
-    for (let i = 0, otherEl; (otherEl = savedPositions[i]); i++) {
-      if (boundingRect.intersects(otherEl)) {
-        if (startAtBottom) { // Bump up.
-          this.top_ = otherEl.top - this.HEIGHT_ - this.MARGIN_VERTICAL_;
-        } else { // Bump down.
-          this.top_ = otherEl.bottom + this.MARGIN_VERTICAL_;
-        }
-        // Recheck other savedPositions
-        boundingRect = this.getBoundingRectangle();
-        i = -1;
-      }
-    }
-
-    this.svgGroup_.setAttribute('transform',
-        'translate(' + this.left_ + ',' + this.top_ + ')');
-  }
-
-  /**
-   * Returns the count of items in the backpack.
-   * @returns {number} The count of items.
-   */
-  getCount() {
-    return this.contents_.length;
-  }
-
-  /**
-   * Returns backpack contents.
-   * @returns {!Array<string>} The backpack contents.
-   */
-  getContents() {
-    // Return a shallow copy of the contents array.
-    return [...this.contents_];
-  }
-
-  /**
-   * Handles when a block or bubble is dropped on this component.
-   * Should not handle delete here.
-   * @param {!Blockly.IDraggable} dragElement The block or bubble currently
-   *   being dragged.
-   */
-  onDrop(dragElement) {
-    if (dragElement instanceof core_browser.BlockSvg) {
-      this.addBlock(/** @type {!Blockly.BlockSvg} */ (dragElement));
-    }
-  }
-  /**
-   * Converts the provided block into a cleaned XML string.
-   * @param {!Blockly.Block} block The block to convert.
-   * @returns {string} The cleaned XML string.
-   * @private
-   */
-  blockToCleanXmlString_(block) {
-    return cleanBlockXML(core_browser.Xml.blockToDom(block));
-  }
-
-  /**
-   * Returns whether the backpack contains a duplicate of the provided Block.
-   * @param {!Blockly.Block} block The block to check.
-   * @returns {boolean} Whether the backpack contains a duplicate of the
-   *     provided block.
-   */
-  containsBlock(block) {
-    const cleanedBlockXml = this.blockToCleanXmlString_(block);
-    return this.contents_.indexOf(cleanedBlockXml) !== -1;
-  }
-
-  /**
-   * Adds the specified block to backpack.
-   * @param {!Blockly.Block} block The block to be added to the backpack.
-   */
-  addBlock(block) {
-    this.addItem(this.blockToCleanXmlString_(block));
-  }
-
-
-  /**
-   * Adds the provided blocks to backpack.
-   * @param {!Array<!Blockly.Block>} blocks The blocks to be added to the
-   *     backpack.
-   */
-  addBlocks(blocks) {
-    const cleanedBlocks = blocks.map(this.blockToCleanXmlString_);
-    this.addItems(cleanedBlocks);
-  }
-
-
-  /**
-   * Removes the specified block from the backpack.
-   * @param {!Blockly.Block} block The block to be removed from the backpack.
-   */
-  removeBlock(block) {
-    this.removeItem(this.blockToCleanXmlString_(block));
-  }
-
-  /**
-   * Adds item to backpack.
-   * @param {string} item Text representing the XML tree of a block to add,
-   *     cleaned of all unnecessary attributes.
-   */
-  addItem(item) {
-    this.addItems([item]);
-  }
-
-  /**
-   * Adds multiple items to the backpack.
-   * @param {!Array<string>} items The backpack contents to add.
-   */
-  addItems(items) {
-    const addedItems = this.filterDuplicates_(items);
-    if (addedItems.length) {
-      this.contents_.unshift(...addedItems);
-      this.onContentChange_();
-    }
-  }
-
-  /**
-   * Removes item from the backpack.
-   * @param {string} item Text representing the XML tree of a block to remove,
-   * cleaned of all unnecessary attributes.
-   */
-  removeItem(item) {
-    const itemIndex = this.contents_.indexOf(item);
-    if (itemIndex !== -1) {
-      this.contents_.splice(itemIndex, 1);
-      this.onContentChange_();
-    }
-  }
-
-  /**
-   * Sets backpack contents.
-   * @param {!Array<string>} contents The new backpack contents.
-   */
-  setContents(contents) {
-    this.contents_ = [];
-    this.contents_ = this.filterDuplicates_(contents);
-    this.onContentChange_();
-  }
-
-  /**
-   * Empties the backpack's contents. If the contents-flyout is currently open
-   * it will be closed.
-   */
-  empty() {
-    if (!this.getCount()) {
-      return;
-    }
-    if (this.contents_.length) {
-      this.contents_ = [];
-      this.onContentChange_();
-    }
-    this.close();
-  }
-
-  /**
-   * Handles content change.
-   * @protected
-   */
-  onContentChange_() {
-    this.maybeRefreshFlyoutContents_();
-    core_browser.Events.fire(new BackpackChange(this.workspace_.id));
-
-    if (!this.options_.useFilledBackpackImage) return;
-    if (this.contents_.length > 0) {
-      this.svgImg_.setAttributeNS(core_browser.utils.dom.XLINK_NS, 'xlink:href',
-          BACKPACK_FILLED_SVG_DATAURI);
-    } else {
-      this.svgImg_.setAttributeNS(core_browser.utils.dom.XLINK_NS, 'xlink:href',
-          BACKPACK_SVG_DATAURI);
-    }
-  }
-
-  /**
-   * Returns a filtered list without duplicates within itself and without any
-   * shared elements with this.contents_.
-   * @param {!Array<string>} array The array of items to filter.
-   * @returns {!Array<string>} The filtered list.
-   * @private
-   */
-  filterDuplicates_(array) {
-    return array.filter((item, idx) => {
-      return array.indexOf(item) === idx && this.contents_.indexOf(item) === -1;
-    });
-  }
-
-  /**
-   * Returns whether the backpack is open-able.
-   * @returns {boolean} Whether the backpack is open-able.
-   * @protected
-   */
-  isOpenable_() {
-    return !this.isOpen() &&
-    this.options_.allowEmptyBackpackOpen ? true : this.getCount() > 0;
-  }
-
-  /**
-   * Returns whether the backpack is open.
-   * @returns {boolean} Whether the backpack is open.
-   */
-  isOpen() {
-    return this.flyout_.isVisible();
-  }
-
-  /**
-   * Opens the backpack flyout.
-   */
-  open() {
-    if (!this.isOpenable_()) {
-      return;
-    }
-    const xml = this.contents_.map((text) => core_browser.Xml.textToDom(text));
-    this.flyout_.show(xml);
-    core_browser.Events.fire(new BackpackOpen(true, this.workspace_.id));
-  }
-
-  /**
-   * Refreshes backpack flyout contents if the flyout is open.
-   * @protected
-   */
-  maybeRefreshFlyoutContents_() {
-    if (!this.isOpen()) {
-      return;
-    }
-    const xml = this.contents_.map((text) => core_browser.Xml.textToDom(text));
-    this.flyout_.show(xml);
-  }
-
-  /**
-   * Closes the backpack flyout.
-   */
-  close() {
-    if (!this.isOpen()) {
-      return;
-    }
-    this.flyout_.hide();
-    core_browser.Events.fire(new BackpackOpen(false, this.workspace_.id));
-  }
-
-  /**
-   * Hides the component. Called in Blockly.hideChaff.
-   * @param {boolean} onlyClosePopups Whether only popups should be closed.
-   *     Flyouts should not be closed if this is true.
-   */
-  autoHide(onlyClosePopups) {
-    // The backpack flyout always autocloses because it overlays the backpack UI
-    // (no backpack to click to close it).
-    if (!onlyClosePopups) {
-      this.close();
-    }
-  }
-
-  /**
-   * Handle click event.
-   * @param {!MouseEvent} e Mouse event.
-   * @protected
-   */
-  onClick_(e) {
-    if (core_browser.browserEvents.isRightButton(e)) {
-      return;
-    }
-    this.open();
-    const uiEvent = new (core_browser.Events.get(core_browser.Events.CLICK))(
-        null, this.workspace_.id, 'backpack');
-    core_browser.Events.fire(uiEvent);
-  }
-
-  /**
-   * Handles when a cursor with a block or bubble enters this drag target.
-   * @param {!Blockly.IDraggable} dragElement The block or bubble currently
-   *   being dragged.
-   */
-  onDragEnter(dragElement) {
-    if (dragElement instanceof core_browser.BlockSvg) {
-      this.updateHoverStying_(true);
-    }
-  }
-
-  /**
-   * Handles when a cursor with a block or bubble exits this drag target.
-   * @param {!Blockly.IDraggable} _dragElement The block or bubble currently
-   *   being dragged.
-   */
-  onDragExit(_dragElement) {
-    this.updateHoverStying_(false);
-  }
-
-  /**
-   * Handles a mouseover event.
-   * @private
-   */
-  onMouseOver_() {
-    if (this.isOpenable_()) {
-      this.updateHoverStying_(true);
-    }
-  }
-
-  /**
-   * Handles a mouseout event.
-   * @private
-   */
-  onMouseOut_() {
-    this.updateHoverStying_(false);
-  }
-
-  /**
-   * Adds or removes styling to darken the backpack to show it is interactable.
-   * @param {boolean} addClass True to add styling, false to remove.
-   * @protected
-   */
-  updateHoverStying_(addClass) {
-    const backpackDarken = 'blocklyBackpackDarken';
-    if (addClass) {
-      core_browser.utils.dom.addClass(
-          /** @type {!SVGElement} */ (this.svgImg_), backpackDarken);
-    } else {
-      core_browser.utils.dom.removeClass(
-          /** @type {!SVGElement} */ (this.svgImg_), backpackDarken);
-    }
-  }
-
-  /**
-   * Returns whether the provided block or bubble should not be moved after
-   * being dropped on this component. If true, the element will return to where
-   * it was when the drag started.
-   * @param {!Blockly.IDraggable} dragElement The block or bubble currently
-   *   being dragged.
-   * @returns {boolean} Whether the block or bubble provided should be returned
-   *   to drag start.
-   */
-  shouldPreventMove(dragElement) {
-    return dragElement instanceof core_browser.BlockSvg;
-  }
-
-  /**
-   * Prevents a workspace scroll and click event if the backpack is openable.
-   * @param {!Event} e A mouse down event.
-   * @protected
-   */
-  blockMouseDownWhenOpenable_(e) {
-    if (!core_browser.browserEvents.isRightButton(e) && this.isOpenable_()) {
-      e.stopPropagation(); // Don't start a workspace scroll.
-    }
-  }
-}
-
-/**
- * Base64 encoded data uri for backpack  icon.
- * @type {string}
- */
-const BACKPACK_SVG_DATAURI =
-    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC' +
-    '9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjI0cHgiIH' +
-    'ZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0cHgiIGZpbGw9IiM0NTVBNjQiPjxnPjxyZW' +
-    'N0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48Zy8+PGc+PH' +
-    'BhdGggZD0iTTEzLjk3LDUuMzRDMTMuOTgsNS4yMywxNCw1LjEyLDE0LDVjMC0xLjEtMC45LT' +
-    'ItMi0ycy0yLDAuOS0yLDJjMCwwLjEyLDAuMDIsMC4yMywwLjAzLDAuMzRDNy42OSw2LjE1LD' +
-    'YsOC4zOCw2LDExdjggYzAsMS4xLDAuOSwyLDIsMmg4YzEuMSwwLDItMC45LDItMnYtOEMxOC' +
-    'w4LjM4LDE2LjMxLDYuMTUsMTMuOTcsNS4zNHogTTExLDVjMC0wLjU1LDAuNDUtMSwxLTFzMS' +
-    'wwLjQ1LDEsMSBjMCwwLjAzLTAuMDEsMC4wNi0wLjAyLDAuMDlDMTIuNjYsNS4wMywxMi4zNC' +
-    'w1LDEyLDVzLTAuNjYsMC4wMy0wLjk4LDAuMDlDMTEuMDEsNS4wNiwxMSw1LjAzLDExLDV6IE' +
-    '0xNiwxM3YxdjAuNSBjMCwwLjI4LTAuMjIsMC41LTAuNSwwLjVTMTUsMTQuNzgsMTUsMTQuNV' +
-    'YxNHYtMUg4di0xaDdoMVYxM3oiLz48L2c+PC9nPjwvc3ZnPg==';
-
-/**
- * Base64 encoded data uri for backpack  icon when filled.
- * @type {string}
- */
-const BACKPACK_FILLED_SVG_DATAURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2' +
-    'lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gQ3JlYX' +
-    'RlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2Zw' +
-    'ogICB3aWR0aD0iMjQiCiAgIGhlaWdodD0iMjQiCiAgIHZpZXdCb3g9IjAgMCAyNCAyNCIKIC' +
-    'AgdmVyc2lvbj0iMS4xIgogICBpZD0ic3ZnNSIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3' +
-    'JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj' +
-    '4KICA8ZGVmcwogICAgIGlkPSJkZWZzMiIgLz4KICA8ZwogICAgIGlkPSJsYXllcjEiPgogIC' +
-    'AgPGcKICAgICAgIHN0eWxlPSJmaWxsOiM0NTVhNjQiCiAgICAgICBpZD0iZzg0OCIKICAgIC' +
-    'AgIHRyYW5zZm9ybT0ibWF0cml4KDAuMjY0NTgzMzMsMCwwLDAuMjY0NTgzMzMsOC44MjQ5OT' +
-    'k3LDguODI0OTk5NykiPgogICAgICA8ZwogICAgICAgICBpZD0iZzgyNiI+CiAgICAgICAgPH' +
-    'JlY3QKICAgICAgICAgICBmaWxsPSJub25lIgogICAgICAgICAgIGhlaWdodD0iMjQiCiAgIC' +
-    'AgICAgICAgd2lkdGg9IjI0IgogICAgICAgICAgIGlkPSJyZWN0ODI0IgogICAgICAgICAgIH' +
-    'g9IjAiCiAgICAgICAgICAgeT0iMCIgLz4KICAgICAgPC9nPgogICAgICA8ZwogICAgICAgIC' +
-    'BpZD0iZzgzNCI+CiAgICAgICAgPGcKICAgICAgICAgICBpZD0iZzgyOCIgLz4KICAgICAgIC' +
-    'A8ZwogICAgICAgICAgIGlkPSJnMjIyMyI+CiAgICAgICAgICA8ZwogICAgICAgICAgICAgaW' +
-    'Q9ImcyMTAxNiI+CiAgICAgICAgICAgIDxnCiAgICAgICAgICAgICAgIHN0eWxlPSJmaWxsOi' +
-    'M0NTVhNjQiCiAgICAgICAgICAgICAgIGlkPSJnMTQ5MyIKICAgICAgICAgICAgICAgdHJhbn' +
-    'Nmb3JtPSJtYXRyaXgoMy43Nzk1Mjc2LDAsMCwzLjc3OTUyNzYsLTMzLjM1NDMzLC0zMy4zNT' +
-    'QzMykiPgogICAgICAgICAgICAgIDxnCiAgICAgICAgICAgICAgICAgaWQ9ImcxNDcxIj4KIC' +
-    'AgICAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgICAgICBpZD0icmVjdDE0NjkiCi' +
-    'AgICAgICAgICAgICAgICAgICBzdHlsZT0iZmlsbDpub25lIgogICAgICAgICAgICAgICAgIC' +
-    'AgZD0iTSAwLDAgSCAyNCBWIDI0IEggMCBaIiAvPgogICAgICAgICAgICAgIDwvZz4KICAgIC' +
-    'AgICAgICAgICA8ZwogICAgICAgICAgICAgICAgIGlkPSJnMTQ3OSI+CiAgICAgICAgICAgIC' +
-    'AgICA8ZwogICAgICAgICAgICAgICAgICAgaWQ9ImcxNDczIiAvPgogICAgICAgICAgICAgIC' +
-    'AgPGcKICAgICAgICAgICAgICAgICAgIGlkPSJnMTQ3NyI+CiAgICAgICAgICAgICAgICAgID' +
-    'xwYXRoCiAgICAgICAgICAgICAgICAgICAgIGlkPSJwYXRoMTQ3NSIKICAgICAgICAgICAgIC' +
-    'AgICAgICAgZD0ibSAxMiwzIGMgLTEuMSwwIC0yLDAuOSAtMiwyIDAsMC4xMiAwLjAxOTMsMC' +
-    '4yMjk4NDM4IDAuMDI5MywwLjMzOTg0MzggQyA3LjY4OTI5NjUsNi4xNDk4NDMzIDYsOC4zOC' +
-    'A2LDExIHYgOCBjIDAsMS4xIDAuOSwyIDIsMiBoIDggYyAxLjEsMCAyLC0wLjkgMiwtMiBWID' +
-    'ExIEMgMTgsOC4zOCAxNi4zMTA3MDMsNi4xNDk4NDMzIDEzLjk3MDcwMyw1LjMzOTg0MzggMT' +
-    'MuOTgwNzAzLDUuMjI5ODQzOCAxNCw1LjEyIDE0LDUgMTQsMy45IDEzLjEsMyAxMiwzIFogbS' +
-    'AwLDEgYyAwLjU1LDAgMSwwLjQ1IDEsMSAwLDAuMDMgLTAuMDA5NSwwLjA1OTg0NCAtMC4wMT' +
-    'k1MywwLjA4OTg0NCBDIDEyLjY2MDQ2OSw1LjAyOTg0MzggMTIuMzQsNSAxMiw1IDExLjY2LD' +
-    'UgMTEuMzM5NTMxLDUuMDI5ODQzOCAxMS4wMTk1MzEsNS4wODk4NDM4IDExLjAwOTUzMSw1Lj' +
-    'A1OTg0MzggMTEsNS4wMyAxMSw1IDExLDQuNDUgMTEuNDUsNCAxMiw0IFogbSAtMy40NzI2NT' +
-    'YyLDYuMzk4NDM4IGggMS4xNTYyNSB2IDIuNjQwNjI0IGggMC4zMDkzMzU0IGwgLTIuMzdlLT' +
-    'UsLTEuMTcxMTQ2IDEuMDgyNzEwNSwtMTBlLTcgMC4wMTEsMS4xNzExNDYgaCAwLjMzMzMwNC' +
-    'BsIC0wLjAzNTA0LC0yLjU4NzMxNSBoIDAuNTc4MTI1IDAuNTc4MTI1IGwgMC4wMTEwNSwyLj' +
-    'U4NzMxNSBoIDAuMzU2MDI0IFYgMTIuMDYwNTQ3IEggMTQuMDYyNSB2IDAuOTc4NTE1IGggMC' +
-    '4zMzAwNzggdiAtMi41NTI3MzQgaCAxLjE1NjI1IHYgMi41NTI3MzQgaCAwLjk2Njc5NyB2ID' +
-    'AuMzU3NDIyIEggOS42ODM1OTM4IDguNTI3MzQzOCA3LjYwMzUxNTYgdiAtMC4zNTc0MjIgaC' +
-    'AwLjkyMzgyODIgeiIKICAgICAgICAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICAgID' +
-    'wvZz4KICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgIDwvZz' +
-    '4KICAgICAgICA8L2c+CiAgICAgIDwvZz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPgo=';
-
-core_browser.Css.register(`
-.blocklyBackpack {
-  opacity: 0.4;
-}
-.blocklyBackpackDarken {
-  opacity: 0.6;
-}
-.blocklyBackpack:active {
-  opacity: 0.8;
-}
-`);
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/workspace-backpack/src/index.js
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-
-
-
-
-;// CONCATENATED MODULE: ./src/addons/BackpackPlugin.js
-
-
-
-class BackpackPlugin extends BasePlugin {
-    constructor() {
-        super();
-    }
-
-    init(x1blockly) {
-        const backpack = new Backpack(x1blockly.workspace);
-        backpack.init();
-    }
-}
-;// CONCATENATED MODULE: ./node_modules/@blockly/plugin-typed-variable-modal/src/TypedVariableModal.js
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview Class responsible for creating a modal used for creating typed
- *     variables.
- * @author aschmiedt@google.com (Abby Schmiedt)
- */
-
-
-
-
-
-/**
- * Class for displaying a modal used for creating typed variables.
- */
-class TypedVariableModal extends Modal {
-  /**
-   * Constructor for creating a typed variable modal.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace that the modal will
-   *     be registered on.
-   * @param {string} btnCallbackName The name used to register the button
-   *     callback.
-   * @param {Array<Array<string>>} types An array holding arrays with the
-   *     display name as the first value and the type as the second.
-   *     Ex: [['Penguin', 'PENGUIN'], ['Giraffe', 'GIRAFFE']].
-   * @param {TypedVarModalMessages} optMessages The messages for a typed
-   *     variable modal.
-   */
-  constructor(workspace, btnCallbackName, types, optMessages) {
-    const title = (optMessages && optMessages['TYPED_VAR_MODAL_TITLE']) ||
-        'Create Typed Variable';
-    super(title, workspace);
-
-    /**
-     * The id of the currently selected type.
-     * @type {?string}
-     * @private
-     */
-    this.selectedType_ = null;
-
-    /**
-     * The input div holding the name of the variable.
-     * @type {HTMLInputElement}
-     * @protected
-     */
-    this.variableNameInput_ = null;
-
-    /**
-     * The div holding the list of variable types.
-     * @type {HTMLElement}
-     * @protected
-     */
-    this.variableTypesDiv_ = null;
-
-    /**
-     * The first type input.
-     * @type {HTMLInputElement}
-     * @protected
-     */
-    this.firstTypeInput_ = null;
-
-    /**
-     * The name used to register the button callback.
-     * @type {string}
-     * @private
-     */
-    this.btnCallBackName_ = btnCallbackName;
-
-    /**
-     * An array holding arrays with the name of the type and the display name
-     *     for the type. Ex: [['Penguin', 'PENGUIN'], ['Giraffe', 'GIRAFFE']].
-     * @type {Array<Array<string>>}
-     * @protected
-     */
-    this.types_ = types;
-
-    const messages = {
-      'TYPED_VAR_MODAL_TITLE': 'Create Typed Variable',
-      'TYPED_VAR_MODAL_VARIABLE_NAME_LABEL': 'Variable Name: ',
-      'TYPED_VAR_MODAL_TYPES_LABEL': 'Variable Types',
-      'TYPED_VAR_MODAL_CONFIRM_BUTTON': 'Ok',
-      'TYPED_VAR_MODAL_CANCEL_BUTTON': 'Cancel',
-      'TYPED_VAR_MODAL_INVALID_NAME':
-          'Name is not valid. Please choose a different name.',
-    };
-
-    core_browser.utils.object.mixin(messages, optMessages);
-
-    this.setLocale(messages);
-
-    /**
-     * If true close the modal when the user clicks outside the modal.
-     * Otherwise, only close when user hits the 'X' button or escape.
-     * @type {boolean}
-     * @override
-     */
-    this.shouldCloseOnOverlayClick = false;
-  }
-
-  /**
-   * The messages for a typed variable modal.
-   * @typedef {{
-   *     TYPED_VAR_MODAL_CONFIRM_BUTTON: string,
-   *     TYPED_VAR_MODAL_VARIABLE_NAME_LABEL: string,
-   *     TYPED_VAR_MODAL_TYPES_LABEL: string,
-   *     TYPED_VAR_MODAL_TITLE: string,
-   *     TYPED_VAR_MODAL_INVALID_NAME: string,
-   *     TYPED_VAR_MODAL_CANCEL_BUTTON: string
-   * }} TypedVarModalMessages
-   */
-
-
-  /**
-   * Create a typed variable modal and display it on the given button name.
-   */
-  init() {
-    super.init();
-    this.workspace_.registerButtonCallback(this.btnCallBackName_, () => {
-      this.show();
-    });
-  }
-
-  /**
-   * Set the messages for the typed variable modal.
-   * Used to change the location.
-   * @param {!TypedVarModalMessages} messages The messages needed to create a
-   *     typed modal.
-   */
-  setLocale(messages) {
-    Object.keys(messages).forEach((k) => {
-      core_browser.Msg[k] = messages[k];
-    });
-  }
-
-  /**
-   * Dispose of the typed variable modal.
-   * @override
-   */
-  dispose() {
-    super.dispose();
-    this.workspace_.removeButtonCallback(this.btnCallBackName_);
-  }
-
-  /**
-   * Get the selected type.
-   * @returns {?string} The selected type.
-   * @protected
-   */
-  getSelectedType_() {
-    return this.selectedType_;
-  }
-
-  /**
-   * Disposes of any events or dom-references belonging to the editor and resets
-   * the inputs.
-   * @override
-   */
-  widgetDispose_() {
-    super.widgetDispose_();
-    this.resetModalInputs_();
-  }
-
-  /**
-   * Get the function to be called when the user tries to create a variable.
-   * @protected
-   */
-  onConfirm_() {
-    const text = this.getValidInput_();
-    const type = this.getSelectedType_() || '';
-    if (text) {
-      const existing =
-          core_browser.Variables.nameUsedWithAnyType(text, this.workspace_);
-      if (existing) {
-        let msg = '';
-        if (existing.type === type) {
-          msg = core_browser.Msg.VARIABLE_ALREADY_EXISTS.replace(
-              '%1', existing.name);
-        } else {
-          msg =
-              core_browser.Msg.VARIABLE_ALREADY_EXISTS_FOR_ANOTHER_TYPE;
-          msg = msg.replace('%1', existing.name).replace('%2',
-              this.getDisplayName_(existing.type));
-        }
-        core_browser.dialog.alert(msg);
-      } else {
-        // No conflict
-        this.workspace_.createVariable(text, type);
-        this.hide();
-      }
-    } else {
-      core_browser.dialog.alert(core_browser.Msg.TYPED_VAR_MODAL_INVALID_NAME);
-    }
-  }
-
-  /**
-   * Get the display name for the given type.
-   * @param {string} type The type to get the display name for.
-   * @returns {string} The display name for the type.
-   * @private
-   */
-  getDisplayName_(type) {
-    for (let i = 0; i < this.types_.length; i++) {
-      const typeNames = this.types_[i];
-      if (type === typeNames[1]) {
-        return typeNames[0];
-      }
-    }
-    return '';
-  }
-
-  /**
-   * Get the valid variable name, or null if the name is not valid.
-   * @returns {string} The valid variable name, or null if the name exists.
-   * @private
-   */
-  getValidInput_() {
-    let newVar = this.variableNameInput_.value;
-    if (newVar) {
-      newVar = newVar.replace(/[\s\xa0]+/g, ' ').trim();
-      if (newVar === core_browser.Msg.RENAME_VARIABLE ||
-          newVar === core_browser.Msg.NEW_VARIABLE) {
-        // Ok, not ALL names are legal...
-        newVar = null;
-      }
-    }
-    return newVar;
-  }
-
-  /**
-   * Render content for the modal content div.
-   * @param {HTMLDivElement} contentContainer The modal's content div.
-   * @override
-   */
-  renderContent_(contentContainer) {
-    const varNameContainer = this.createVarNameContainer_();
-    this.variableNameInput_ = varNameContainer
-        .querySelector('.typedModalVariableNameInput');
-
-    const typedVarDiv = document.createElement('div');
-    typedVarDiv.className = 'typedModalTypes';
-    typedVarDiv.textContent = core_browser.Msg.TYPED_VAR_MODAL_TYPES_LABEL;
-
-    this.variableTypesDiv_ = this.createVariableTypeContainer_(this.types_);
-    this.resetModalInputs_();
-    typedVarDiv.appendChild(this.variableTypesDiv_);
-    contentContainer.appendChild(varNameContainer);
-    contentContainer.appendChild(typedVarDiv);
-  }
-
-  /**
-   * Render content for the modal footer.
-   * @param {HTMLElement} footerContainer The modal's footer div.
-   * @override
-   */
-  renderFooter_(footerContainer) {
-    footerContainer.appendChild(this.createConfirmBtn_());
-    footerContainer.appendChild(this.createCancelBtn_());
-  }
-
-  /**
-   * Create button in charge of creating the variable.
-   * @returns {!HTMLButtonElement} The button in charge of creating a variable.
-   * @protected
-   */
-  createConfirmBtn_() {
-    const confirmBtn = document.createElement('button');
-    confirmBtn.className = 'blocklyModalBtn blocklyModalBtnPrimary';
-    confirmBtn.textContent = core_browser.Msg.TYPED_VAR_MODAL_CONFIRM_BUTTON;
-    this.addEvent_(confirmBtn, 'click', this, this.onConfirm_);
-    return confirmBtn;
-  }
-
-  /**
-   * Create button in charge of cancelling.
-   * @returns {!HTMLButtonElement} The button in charge of cancelling.
-   * @protected
-   */
-  createCancelBtn_() {
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'blocklyModalBtn';
-    cancelBtn.textContent = core_browser.Msg.TYPED_VAR_MODAL_CANCEL_BUTTON;
-    this.addEvent_(cancelBtn, 'click', this, this.onCancel_);
-    return cancelBtn;
-  }
-
-
-  /**
-   * Check the first type in the list.
-   * @protected
-   */
-  resetModalInputs_() {
-    this.firstTypeInput_.checked = true;
-    this.selectedType_ = this.firstTypeInput_.id;
-    this.variableNameInput_.value = '';
-  }
-
-  /**
-   * Creates an unordered list containing all the types.
-   * @param {Array<Array<string>>} types An array holding arrays with the
-   *     display name as the first value and the type as the second.
-   *     Ex: [['Penguin', 'PENGUIN'], ['Giraffe', 'GIRAFFE']].
-   * @returns {HTMLElement} The list of types.
-   * @protected
-   */
-  createVariableTypeContainer_(types) {
-    const typeList = document.createElement('ul');
-    typeList.className = 'typedModalList';
-    for (let i = 0; i < types.length; i++) {
-      const type = types[i];
-      const typeDisplayName = type[0];
-      const typeName = type[1];
-      const typeLi = document.createElement('li');
-      const typeInput = document.createElement('input');
-      typeInput.className = 'typedModalTypes';
-      typeInput.type = 'radio';
-      typeInput.id = typeName;
-      typeInput.name = 'blocklyVariableType';
-      this.addEvent_(typeInput, 'click', this, (e) => {
-        this.selectedType_ = e.target.id;
-      });
-      this.firstTypeInput_ = typeList.querySelector('.typedModalTypes');
-      const typeLabel = document.createElement('label');
-      typeLabel.textContent = typeDisplayName;
-      typeLabel.setAttribute('for', typeName);
-
-      typeLi.appendChild(typeInput);
-      typeLi.appendChild(typeLabel);
-      typeList.appendChild(typeLi);
-    }
-    return typeList;
-  }
-
-  /**
-   * Create the div that holds the text input and label for the variable name
-   * input.
-   * @returns {HTMLDivElement} The div holding the text input and label for text
-   *     input.
-   * @protected
-   */
-  createVarNameContainer_() {
-    const varNameContainer = document.createElement('div');
-    varNameContainer.className = 'typedModalVariableInputContainer';
-
-    const varNameLabel = document.createElement('label');
-    varNameLabel.className = 'typedModalVariableLabel';
-    varNameLabel.textContent =
-      core_browser.Msg.TYPED_VAR_MODAL_VARIABLE_NAME_LABEL;
-    varNameLabel.setAttribute('for', 'variableInput');
-
-    const varNameInput = document.createElement('input');
-    varNameInput.className = 'typedModalVariableNameInput';
-    varNameInput.type = 'text';
-    varNameInput.id = 'variableInput';
-
-    varNameContainer.appendChild(varNameLabel);
-    varNameContainer.appendChild(varNameInput);
-    return varNameContainer;
-  }
-}
-
-core_browser.Css.register(`
-.typedModalTitle {
-  font-weight: bold;
-  font-size: 1em;
-}
-.typedModalVariableInputContainer {
-  margin: 1em 0 1em 0;
-}
-.typedModalVariableLabel{
-  margin-right: 0.5em;
-}
-.typedModalTypes ul{
-  display: flex;
-  flex-wrap: wrap;
-  list-style-type: none;
-  padding: 0;
-}
-.typedModalTypes li {
-  margin-right: 1em;
-  display: flex;
-}
-`);
-
-;// CONCATENATED MODULE: ./node_modules/@blockly/plugin-typed-variable-modal/src/index.js
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-
-
-;// CONCATENATED MODULE: ./src/addons/TypedVariablePlugin.js
-
-
-
-
-class TypedVariablePlugin extends BasePlugin {
-    constructor(x1blockly) {
-        super(x1blockly);
-
-        if (x1blockly.settings.toolbox['contents'] instanceof Array) {
-            x1blockly.settings.toolbox['contents'].push({
-                'kind': 'category',
-                'name': 'Typed Variables',
-                'custom': 'CREATE_TYPED_VARIABLE',
-                'categorystyle': 'variable_category',
-            });
-        }
-    }
-
-    init(x1blockly) {
-        const types = [['Penguin', 'PENGUIN'], ['Giraffe', 'GIRAFFE']];
-        x1blockly.workspace.registerToolboxCategoryCallback('CREATE_TYPED_VARIABLE', this.createFlyout);
-
-        const typedVarModal = new TypedVariableModal(x1blockly.workspace, 'CREATE_TYPED_VARIABLE', types);
-        typedVarModal.init();
-    }
-
-    createFlyout(workspace) {
-        let xmlList = [];
-        const button = document.createElement('button');
-        button.setAttribute('text', 'Create Typed Variable');
-        button.setAttribute('callbackKey', 'CREATE_TYPED_VARIABLE');
-
-        xmlList.push(button);
-
-        const blockList = blockly.VariablesDynamic.flyoutCategoryBlocks(workspace);
-        xmlList = xmlList.concat(blockList);
-        return xmlList;
-    }
-}
-;// CONCATENATED MODULE: ./src/addons/MainPlugin.js
-/* provided dependency */ var MainPlugin_console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-
-
-class MainPlugin extends BasePlugin {
-    constructor(x1blockly) {
-        super(x1blockly);
-
-        MainPlugin_console.log(x1blockly.settings.toolbox['contents']);
-
-        if (x1blockly.settings.toolbox.contents instanceof Array) {
-            x1blockly.settings.toolbox.contents.push({
-                'kind': 'category',
-                'name': 'Test Blocks',
-                'categorystyle': 'login_category',
-                'contents': [{
-                    enabled: true,
-                    kind: "block",
-                    type: "js_block"
-                }]
-            });
-        }
-    }
-
-    init(x1blockly) {
-
-    }
-}
-// EXTERNAL MODULE: ./node_modules/blockly/javascript.js
-var javascript = __webpack_require__("./node_modules/blockly/javascript.js");
-;// CONCATENATED MODULE: ./src/blocks/js-block.js
-
-
-
-//definition
-blockly.Blocks.js_block = {
-    init: function() {
-        this.appendValueInput("test_field")
-            .setCheck(null)
-            .appendField(new blockly.FieldNumber(0), "TEST_FIELD");
-        this.setColour(230);
-        this.setTooltip("Test");
+};
+
+blockly.Blocks.minecraft_createDrone = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Создать дрона")
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Создааёт дрона возле вас");
         this.setHelpUrl("");
     }
 };
 
 
-//code generation
-javascript.javascriptGenerator.js_block = function(block) {
-    const value = block.getFieldValue('TEST_FIELD');
+blockly.Blocks.minecraft_build = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField(new blockly.FieldVariable('build_block'), "blocktype")
+            .appendField("напр.")
+            .appendField(new blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"], ["верх", "UP"], ["низ", "DOWN"]]), "dir");
 
-    let code = `let test = ${value} * ${value};`;
-
-    return code;
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Строить");
+        this.setHelpUrl("");
+    }
 };
 
 
-;// CONCATENATED MODULE: ./src/blocks/json-block.js
+blockly.Blocks.minecraft_moveDrone = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Двигать дрона")
+            .appendField(new blockly.FieldDropdown([["вперёд", "front"], ["назад", "back"], ["лево", "left"], ["право", "right"], ["вверх", "up"], ["вниз", "down"]]), "Type")
+            .appendField("шаг");
+        this.appendValueInput("step") .setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Двигать дрона в заданном направлении с заданным шагом");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_botToPlayer = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Телепортировать ")
+            .appendField(new blockly.FieldDropdown([["дрон к хозяину", "botToPlayer"], ["хозяина к дрону", "playerToBot"]]), "Type");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Телепортирует дрон к вам");
+        this.setHelpUrl("");
+    }
+};
 
 
+blockly.Blocks.minecraft_tpdrone = {
+    init: function () {
+        this.appendDummyInput().appendField("Телепортировать дрон на");
+        this.appendDummyInput().appendField("x:");
+        this.appendValueInput("tpdrone_x") .setCheck("Number");
+        this.appendDummyInput().appendField("y:");
+        this.appendValueInput("tpdrone_y") .setCheck("Number");
+        this.appendDummyInput().appendField("z:");
+        this.appendValueInput("tpdrone_z") .setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Телепортировать дрон *");
+        this.setHelpUrl("");
+    }
+};
 
-//definition
-blockly.defineBlocksWithJsonArray([{
-    "type": "json_block",
-    "message0": "%1 %2",
-    "args0": [
-        {
-            "type": "field_number",
-            "name": "TEST_FIELD",
-            "value": 0
-        },
-        {
-            "type": "input_value",
-            "name": "test_field"
+blockly.Blocks.minecraft_summon = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Создать")
+            .appendField(new blockly.FieldDropdown([["Курица", "Chicken"], ["Корова", "Cow"], ["Волк", "Wolf"], ["Свинья", "Pig"], ["Овца", "Sheep"], ["Кролик", "Rabbit"], ["Лошадь", "Horse"], ["Оцелот", "Ocelot"], ["Житель", "Villager"], ["Зомби", "Zombie"], ["Скелет", "Skeleton"], ["Крипер", "Creeper"], ["Паук", "Spider"]]), "Type");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(359);
+        this.setTooltip("Призывает сущность");
+        this.setHelpUrl("");
+    }
+};
+
+
+blockly.Blocks.minecraft_time = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Время в мире (час)")
+            .appendField(new blockly.FieldNumber(0), "time");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(359);
+        this.setTooltip("Время на сервере");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_weather = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Погода на сервере")
+            .appendField(new blockly.FieldDropdown([["солнечная", "clear"], ["дождь", "rain"], ["буря", "thunder"]]), "Type")
+            .appendField("мин. продолж.")
+            .appendField(new blockly.FieldNumber(0), "duration");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(359);
+        this.setTooltip("Погода на сервере");
+        this.setHelpUrl("");
+    }
+};
+
+
+blockly.Blocks.minecraft_text = {
+    init: function () {
+        this.appendDummyInput().appendField("Текст в чат");
+        this.appendDummyInput()
+            .appendField("цвет")
+            .appendField(new blockly.FieldDropdown([["зелёный", "green"], ["жёлтый", "yellow"], ["красный", "red"]]), "color");
+        this.appendValueInput("mctext") .setCheck("String");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Текст в чат от лица дрона");
+        this.setHelpUrl("");
+    }
+};
+
+
+blockly.Blocks.minecraft_mineblock = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Добыть блок");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Добывает блок на месте дрона в инвентарь игрока");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_craft = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Скрафтить предмет: ")
+            .appendField(new blockly.FieldDropdown([["Палка", "stick"], ["Доски", "oak_planks"], ["Деревянный меч", "wooden_sword"]]), "item")
+            .appendField("Кол-во: ")
+            .appendField(new blockly.FieldNumber(1), "count");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(255);
+        this.setTooltip("Крафтит предмет из имеющихся вещей и помещает его в инвентарь");
+        this.setHelpUrl("");
+    }
+};
+
+
+blockly.Blocks.minecraft_playnote = {
+    init: function () {
+        this.appendDummyInput().appendField("Проигрывать. Октава");
+        this.appendDummyInput()
+            .appendField(new blockly.FieldDropdown([["0", "0"], ["1", "1"]]), "octave")
+            .appendField("тон")
+            .appendField(new blockly.FieldDropdown([["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["E", "E"], ["F", "F"], ["G", "G"]]), "tone")
+            .appendField("инструмент")
+            .appendField(new blockly.FieldDropdown([["Банджо", "BANJO"], ["Большой барабан", "BASS_DRUM"], ["Бас-гитара", "BASS_GUITAR"], ["Колокол", "BELL"], ["Бит", "BIT"], ["Звон", "CHIME"], ["Колокольчик", "COW_BELL"], ["Диджериду", "DIDGERIDOO"], ["Флейта", "FLUTE"], ["Гитара", "GUITAR"], ["Железный ксилофон", "IRON_XYLOPHONE"], ["Пианино", "PIANO"], ["Плинг", "PLING"], ["Малый барабан", "SNARE_DRUM"], ["Палочки", "STICKS"], ["Ксилофон", "XYLOPHONE"]]), "instrument");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Проигрывает возле дрона ноту с установленными параметрами");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_if = {
+    init: function () {
+        this.appendDummyInput().appendField("Если");
+        this.appendDummyInput().appendField(new blockly.FieldDropdown([["Блок в дроне", "blockin"], ["Блок слева", "blockleft"], ["Блок справа", "blockright"], ["Блок сзади", "blockback"]]), "whatif");
+        this.appendDummyInput().appendField("==")
+            .appendField(new blockly.FieldVariable('mc_val_if'), "valif");
+        this.appendDummyInput().appendField("то");
+        this.appendDummyInput().appendField(new blockly.FieldDropdown([["вперёд", "front"], ["назад", "back"], ["лево", "left"], ["право", "right"], ["Вверх", "up"], ["Вниз", "down"]]), "whatthen");
+        this.appendDummyInput().appendField(new blockly.FieldNumber(1), "valthen");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Условный блок Minecraft контролирующий движение");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_movehand = {
+    init: function () {
+        this.appendDummyInput().appendField("Двигать ");
+        this.appendDummyInput().appendField(new blockly.FieldDropdown([["руками", "hand"], ["ногами", "leg"]]), "type");
+        this.appendDummyInput().appendField(new blockly.FieldDropdown([["правой", "right"], ["левой", "left"]]), "what");
+        this.appendDummyInput().appendField("x");
+        this.appendValueInput("x") .setCheck("Number");
+        this.appendDummyInput().appendField("y");
+        this.appendValueInput("y") .setCheck("Number");
+        this.appendDummyInput().appendField("z");
+        this.appendValueInput("z") .setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Двигает руками дрона в зависимости от заданных координат");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_getdroneblock = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("(async) Запрос данных с сервера в")
+            .appendField(new blockly.FieldVariable('response'), "response")
+            .appendField(new blockly.FieldDropdown([["У дрона", "drone"], ["У бота", "sputnik"], ["У игрока", "player"]]), "Type");
+        this.appendStatementInput("otherCode")
+            .setCheck(null);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(255);
+        this.setTooltip("Асинхронная функция. Берёт данные сервера на текущем шаге и обрабатывает их");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_getServer = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Запрос данных")
+            .appendField(new blockly.FieldDropdown([["У дрона", "drone"], ["У бота", "sputnik"], ["У игрока", "player"], ["Карта", "map"]], this.handleTypeSelection.bind(this)), "Type");
+        this.appendValueInput("x").setCheck("Number");
+        this.appendValueInput("y").setCheck("Number");
+        this.appendValueInput("x").setCheck("Number");
+        this.appendDummyInput()
+            .appendField("и поместить в ")
+            .appendField(new blockly.FieldVariable('response'), "response");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(255);
+        this.setTooltip("");
+        this.setHelpUrl("");
+    },
+    handleTypeSelection: function (newType) {
+        // Avoid unnecessary updates if someone clicks the same field twice
+        if(this.columnType !== newType) {
+            // Update this.columnType to the new value
+            this.columnType = newType;
+            // Add or remove fields as appropriate
+            this.updateShape();
         }
-    ],
-    "colour": 230,
-    "tooltip": "Test",
-    "helpUrl": ""
-}]);
+    },
+    updateShape: function () {
+        if(this.getInput('x'))
+            this.removeInput('x');
+        if(this.getInput('y'))
+            this.removeInput('y');
+        if(this.getInput('z'))
+            this.removeInput('z');
+
+        if (this.columnType==="map") {
+            this.appendValueInput("x").setCheck("Number");
+            this.appendValueInput("y").setCheck("Number");
+            this.appendValueInput("z").setCheck("Number");
+        }
+        else {
+            if(this.getInput('x'))
+                this.removeInput('x');
+            if(this.getInput('y'))
+                this.removeInput('y');
+            if(this.getInput('z'))
+                this.removeInput('z');
+        }
+    },
+    mutationToDom: function () { //Нужно при сохранении в XML
+        var container = document.createElement('mutation');
+        container.setAttribute('column_type', this.columnType);
+        return container;
+    },
+    domToMutation: function (xmlElement) {
+        var columnType = xmlElement.getAttribute('column_type');
+
+        if(columnType && columnType !== 'undefined') {
+            this.columnType = columnType;
+        }
+        this.updateShape();
+    }
+};
+
+blockly.Blocks.minecraft_setBlockData = {
+    init: function() {
+        this.appendDummyInput().appendField("Перенести данные блока");
+        this.appendDummyInput().appendField(new blockly.FieldVariable('block_data'), "blockData");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#cc0000");
+        this.setTooltip("Из данных блока полностью воссаздаёт блок на месте дрона");
+        this.setHelpUrl("");
+
+    }
+};
+
+blockly.Blocks.minecraft_jsonParse = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField(new blockly.FieldVariable('server_data'), "server_data")
+            .appendField(" = ");
+        this.appendDummyInput()
+            .appendField("Ответ JSON:");
+        this.appendValueInput("server_string");
+        this.appendDummyInput()
+            .appendField(new blockly.FieldDropdown([["Дрон/бот","drone"], ["Игрок","player"], ["Блоки рядом","botNearBlock"], ["Блок на коорд.","block"], ["Сущность на коорд.","entity"], ["Инвентарь (для бота)","inventory"]], this.handleTypeSelection.bind(this)), "type");
+        this.columnType = this.getFieldValue('type');
+        this.updateShape();
+        this.appendDummyInput() .appendField("Параметр:");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(255);
+        this.setTooltip("Разбор ответна от сервера на переменные,параметры: x,y,z,front,behind,in,left,right(такиеже с приставкой _data), block(x,y,z), чило (для радиуса мобов)");
+        this.setHelpUrl("");
+    },
+    handleTypeSelection: function (newType) {
+        // Avoid unnecessary updates if someone clicks the same field twice
+        if(this.columnType !== newType) {
+            // Update this.columnType to the new value
+            this.columnType = newType;
+            // Add or remove fields as appropriate
+            this.updateShape();
+        }
+    },
+    updateShape: function () {
+        if(this.getInput('data'))
+            this.removeInput('data');
+
+        if (this.columnType==="drone") {
+            this.appendDummyInput('data').appendField(new blockly.FieldDropdown([["X","x"], ["Z","y"], ["Z","z"], ["Сердец (у бота)","hp"]]), "data");
+        }
+        else if(this.columnType==="player") {
+            this.appendDummyInput('data').appendField(new blockly.FieldDropdown([["X","x"], ["Z","y"], ["Z","z"], ["Имя","name"], ["Чат","chat"]]), "data");
+        }
+        else if(this.columnType==="botNearBlock") {
+            this.appendDummyInput('data').appendField(new blockly.FieldDropdown([["Впереди","front"], ["Слева", "left"], ["Справа","right"], ["Позади","behind"], ["В","in"]]), "data");
+        }
+        else if(this.columnType==="block") {
+            if(this.getInput('data'))
+                this.removeInput('data');
+        }
+        else if(this.columnType==="entity") {
+            if(this.getInput('data'))
+                this.removeInput('data');
+        }
+        else if(this.columnType==="botMap") {
+            this.appendValueInput("data");
+        }
+        else if(this.columnType==="botNearEntity") {
+            this.appendValueInput("data");
+        }
+        else if(this.columnType==="inventory") {
+            this.appendValueInput("data").setCheck("Number");
+        }
+    },
+    mutationToDom: function () { //Нужно при сохранении в XML
+        var container = document.createElement('mutation');
+        container.setAttribute('column_type', this.columnType);
+        // ALWAYS return container; this will be the input for domToMutation.
+        return container;
+    },
+    domToMutation: function (xmlElement) {
+        var columnType = xmlElement.getAttribute('column_type');
+        // If, for whatever reason, you try to save an undefined value in column_type, it will actually be saved as the string 'undefined'
+        // If this is not an acceptable value, filter it out
+        if(columnType && columnType !== 'undefined') {
+            this.columnType = columnType;
+        }
+        // Run updateShape to append block values as needed
+        this.updateShape();
+    }
+};
+
+blockly.Blocks.minecraft_coordBlock = {
+    init: function() {
+        this.appendDummyInput().appendField("Координаты X");
+        this.appendValueInput("x").setCheck("Number");
+        this.appendDummyInput().appendField("Y");
+        this.appendValueInput("y").setCheck("Number");
+        this.appendDummyInput().appendField("Z");
+        this.appendValueInput("z").setCheck("Number");
+        this.setInputsInline(true);
+        this.setOutput(true, "String");
+        this.setColour(255);
+        this.setTooltip("Блок координат");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_droneSputnik = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Создать БОТ")
+            .appendField(new blockly.FieldDropdown([["Человек","PLAYER"], ["Зомби","ZOMBIE"], ["Житель","VILLAGER"], ["Корова","COW"], ["Ближайший моб","zaxvat"]]), "mob_type");
+        this.appendDummyInput()
+            .appendField("имя:");
+        this.appendValueInput("mob_name");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Создаёт бота");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_momentmove = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Движение на шаг, напр.")
+            .appendField(new blockly.FieldDropdown([["x+1", "x+1"], ["x-1", "x-1"], ["z+1", "z+1"], ["z-1", "z-1"]]), "dir");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Освобождает спутника от контроля");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_sputnikCraft = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Скрафтить предмет: ")
+            .appendField(new blockly.FieldVariable('craft_block'), "item");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Крафтит предмет из инвентаря бота");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_sputnikmineblock = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Добыть блок впереди");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Добывает блок на месте дрона в инвентарь игрока");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_sputnikInvSlot = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Положить в руку слот в инвентаре: ");
+        this.appendValueInput("slot").setCheck("Number");;
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Крафтит предмет из инвентаря бота");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_sputnikBuild = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Строить блок из руки бота")
+            .appendField("напр.")
+            .appendField(new blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"]]), "dir");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Строить");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_unSputnik = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Освободить бота");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Освобождает спутника от контроля");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_sputnikProg = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Запрограммировать автономно.");
+        this.appendDummyInput()
+            .appendField("Скин по имени:");
+        this.appendValueInput("mob_name");
+        this.setInputsInline(true);
+        this.appendStatementInput("otherCode")
+            .setCheck(null);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff9494");
+        this.setTooltip("Программируемый бот (для блоков [prog]). Команды выполняются только после завершения блока. Повторение зациклено.");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_progSputnikMove = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("[prog] Двигать БОТ за дроном")
+            .appendField(new blockly.FieldCheckbox("TRUE"), "drone")
+            .appendField("или на");
+        this.appendDummyInput().appendField("x:");
+        this.appendValueInput("x") .setCheck("Number");
+        this.appendDummyInput().appendField("y:");
+        this.appendValueInput("y") .setCheck("Number");
+        this.appendDummyInput().appendField("z:");
+        this.appendValueInput("z") .setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff9494");
+        this.setTooltip("Спутник начинает следить за дроном или пойдёт на координаты");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_progSputnikAtack = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("[prog] Атаковать моба");
+        this.appendValueInput("mob_type");
+        this.appendDummyInput()
+            .appendField("в радиусе");
+        this.appendValueInput("radius").setCheck("Number");;
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff9494");
+        this.setTooltip("Если бот в указанном радиусе найдёт указанного моба, он атакует его");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_tpBot = {
+    init: function () {
+        this.appendDummyInput().appendField("Телепортировать бот на");
+        this.appendDummyInput().appendField("x:");
+        this.appendValueInput("tpbot_x") .setCheck("Number");
+        this.appendDummyInput().appendField("y:");
+        this.appendValueInput("tpbot_y") .setCheck("Number");
+        this.appendDummyInput().appendField("z:");
+        this.appendValueInput("tpbot_z") .setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Телепортировать бот на координаты");
+        this.setHelpUrl("");
+    }
+};
+
+blockly.Blocks.minecraft_playerToBot = {
+    init: function () {
+        this.appendDummyInput().appendField("Телепортировать игрока к боту");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour("#ff6161");
+        this.setTooltip("Телепортирует вас к боту");
+        this.setHelpUrl("");
+    }
+};
+
+// EXTERNAL MODULE: ./node_modules/blockly/javascript.js
+var javascript = __webpack_require__("./node_modules/blockly/javascript.js");
+;// CONCATENATED MODULE: ./src/blocks/minecraft/js-generators.js
 
 
-//code generation
-javascript.javascriptGenerator.js_block = function(block) {
-    const value = block.getFieldValue('TEST_FIELD');
 
-    let code = `let test = ${value} * ${value};`;
+var timer = 'pause(100); \n'
+
+javascript.javascriptGenerator.minecraft_pause = function (block) {
+    var number_ms = block.getFieldValue('ms');
+    var code = 'pause('+number_ms+'); \n';
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_connect = function (block) {
+    var text_nickname = NickName;
+    var checkbox_world = block.getFieldValue('world') === 'TRUE';
+    var checkbox_mob = block.getFieldValue('mob') === 'TRUE';
+
+    var url = text_nickname+'/connect/' + checkbox_world + '/' + checkbox_mob;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_build = function (block) {
+    var text_nickname = NickName;
+    var dir = block.getFieldValue('dir');
+    var blocktype = blockly.JavaScript.variableDB_.getName(block.getFieldValue('blocktype'), blockly.VARIABLE_CATEGORY_NAME);
+
+    var url = text_nickname+'/drone/build/creative/\'+' + blocktype + '+\'/'+dir;
+    var code = timer+"xhr('"+url+"');\n";
 
     return code;
 };
+
+javascript.javascriptGenerator.minecraft_createDrone = function (block) {
+    var text_nickname = NickName;
+    var url = text_nickname+'/drone/create';
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+
+javascript.javascriptGenerator.minecraft_moveDrone = function (block) {
+    var text_nickname = NickName;
+    var type = block.getFieldValue('Type');
+    var step =  block.getField("step") ? String(Number(block.getFieldValue("step"))) : blockly.JavaScript.valueToCode(block, "step", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(step) == false)
+        step = '\'+'+ step + '+\'';
+    var url = text_nickname+'/drone/move/' + type + '/' + step;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_botToPlayer = function (block) {
+    var text_nickname = NickName;
+    var type = block.getFieldValue('Type');
+    var url = text_nickname+'/drone/botToPlayer/' + type;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_tpdrone = function (block) {
+    var text_nickname = NickName;
+    var number_x =  block.getField("tpdrone_x") ? String(Number(block.getFieldValue("tpdrone_x"))) : blockly.JavaScript.valueToCode(block, "tpdrone_x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_y =  block.getField("tpdrone_y") ? String(Number(block.getFieldValue("tpdrone_y"))) : blockly.JavaScript.valueToCode(block, "tpdrone_y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_z =  block.getField("tpdrone_z") ? String(Number(block.getFieldValue("tpdrone_z"))) : blockly.JavaScript.valueToCode(block, "tpdrone_z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_x) == false)
+        number_x = '\'+'+ number_x + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_y) == false)
+        number_y = '\'+'+ number_y + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_z) == false)
+        number_z = '\'+'+ number_z + '+\'';
+
+    var url = text_nickname+'/drone/tpbot/' + number_x + '/' + number_y + '/' + number_z;
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_summon = function (block) {
+    var text_nickname = NickName;
+    var type = block.getFieldValue('Type');
+
+    var url = text_nickname+'/drone/summon/' + type;
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+
+javascript.javascriptGenerator.minecraft_time = function (block) {
+    var text_nickname = NickName;
+    var time = block.getFieldValue('time');
+
+    var url = text_nickname+'/drone/setTime/' + time;
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_weather = function (block) {
+    var text_nickname = NickName;
+    var type = block.getFieldValue('Type');
+    var duration = block.getFieldValue('duration');
+
+    var url = text_nickname+'/drone/setWeather/' + type + '/' + duration;
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_text = function (block) {
+    var text_nickname = NickName;
+    var color = block.getFieldValue('color');
+    var mtexts =  block.getField("mctext") ? String(Number(block.getFieldValue("mctext"))) : blockly.JavaScript.valueToCode(block, "mctext", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    var url = text_nickname+'/drone/text/' + color + '/' + mtexts.replace("'","").replace("'","");
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+
+javascript.javascriptGenerator.minecraft_mineblock = function (block) {
+    var text_nickname = NickName;
+
+    var url = text_nickname+'/drone/mine';
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_craft = function (block) {
+    var text_nickname = NickName;
+    var item = block.getFieldValue('item');
+    var count = block.getFieldValue('count');
+
+    var url = text_nickname+'/drone/craft/' + item + '/'+ count;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_playnote = function (block) {
+    var text_nickname = NickName;
+    var octave = block.getFieldValue('octave');
+    var tone = block.getFieldValue('tone');
+    var instr = block.getFieldValue('instrument');
+
+    var url = text_nickname+'/drone/playNote/' + octave + '/'+ tone+ '/'+ instr;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_if = function (block) {
+    var text_nickname = NickName;
+    var whatif = block.getFieldValue('whatif');
+    var valif = blockly.JavaScript.variableDB_.getName(block.getFieldValue('valif'), blockly.VARIABLE_CATEGORY_NAME);
+    var whatthen = block.getFieldValue('whatthen');
+    var valthen = block.getFieldValue('valthen');
+
+    var url =text_nickname+'/drone/if/' + whatif + '/\'+'+ valif+ '+\'/'+ whatthen + '/'+ valthen;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_movehand = function (block) {
+    var text_nickname = NickName;
+    var number_x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : blockly.JavaScript.valueToCode(block, "x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : blockly.JavaScript.valueToCode(block, "y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_z =  block.getField("z") ? String(Number(block.getFieldValue("z"))) : blockly.JavaScript.valueToCode(block, "z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var what = block.getFieldValue('what');
+    var type = block.getFieldValue('type');
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_x) == false)
+        number_x = '\'+'+ number_x + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_y) == false)
+        number_y = '\'+'+ number_y + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_z) == false)
+        number_z = '\'+'+ number_z + '+\'';
+
+    var url = text_nickname+'/drone/moveBotBody/' + type + '/' + what + '/' + number_x + '/' + number_y + '/' + number_z;
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_getdroneblock = function (block) {
+    var text_nickname = NickName;
+    var poll_url = pollUrl;
+
+    var otherCode = blockly.JavaScript.statementToCode(block, 'otherCode');
+    var response = blockly.JavaScript.nameDB_.getName(block.getFieldValue('response'), blockly.VARIABLE_CATEGORY_NAME);
+    var type = block.getFieldValue('Type');
+    var url = pollUrl+text_nickname+'/'+type
+    var funcUpdate = "var updateFromServer = function (err, data) {if (err != null) "+response+" = 'error';\n else {\n  "+response+" = data;\n"+otherCode+"\n }\n};";
+    var code = funcUpdate+"\n getJSON('"+text_nickname+"/"+type+"', updateFromServer);";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_setBlockData = function (block) {
+    var text_nickname = NickName;
+    var blockData =  blockly.JavaScript.variableDB_.getName(block.getFieldValue('blockData'), blockly.VARIABLE_CATEGORY_NAME);
+
+    var url = text_nickname+'/drone/setblockdata/\'+' + blockData + '.split("=").join("-")+\'';
+    var code = timer+"xhr('"+url+"');\n";
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_jsonParse = function (block) {
+    var string = block.getField("string") ? String(Number(block.getFieldValue("server_string"))) : blockly.JavaScript.valueToCode(block, "server_string", blockly.JavaScript.ORDER_ASSIGNMENT) || "0";
+    var type = block.getFieldValue('type');
+    if(type==="drone" || type==="player" || type==="botNearBlock") {
+        var data = block.getFieldValue('data');
+    }
+    else {
+        var data =  block.getField("data") ? String(Number(block.getFieldValue("data"))) : blockly.JavaScript.valueToCode(block, "data", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    }
+    var server_data = blockly.JavaScript.nameDB_.getName(block.getFieldValue('server_data'), blockly.VARIABLE_CATEGORY_NAME);
+    //data = data.replace("'","").replace("'","");
+    //var code = server_data+'='+string+'.'+type+'.'+data+';';
+    if(type==="block" || type==="entity")
+        var code = server_data+'='+string+'[\''+type+'\'];\n';
+    else
+        var code = server_data+'='+string+'[\''+type+'\'][\''+data+'\'];\n';
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_coordBlock = function (block) {
+    var x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : blockly.JavaScript.valueToCode(block, "x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : blockly.JavaScript.valueToCode(block, "y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var z =  block.getField("z") ? String(Number(block.getFieldValue("z"))) : blockly.JavaScript.valueToCode(block, "z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    if(/^(0|-?[1-9]\d{0,5})$/.test(x) == false)
+        x = '\'+'+ x + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(y) == false)
+        y = '\'+'+ y + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(z) == false)
+        z = '\'+'+ z + '+\'';
+    var code = '\'block('+x+' '+y+' '+z+')\'';
+    return [code, blockly.JavaScript.ORDER_ATOMIC];
+};
+
+javascript.javascriptGenerator.minecraft_droneSputnik = function (block) {
+    var text_nickname = NickName;
+    var mob_type = block.getFieldValue('mob_type');
+
+    var checkbox_zaxvat = "false";
+    if(mob_type=="zaxvat")
+        checkbox_zaxvat="true";
+
+    var mob_name =  block.getField("mob_name") ? String(Number(block.getFieldValue("mob_name"))) : blockly.JavaScript.valueToCode(block, "mob_name", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    var url = text_nickname+'/sputnik/create/' + mob_type + '/' + mob_name.split("'").join("") + '/' + checkbox_zaxvat;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_momentmove = function (block) {
+    var text_nickname = NickName;
+    var dir = block.getFieldValue('dir');
+
+    var url = text_nickname+'/sputnik/momentmove/'+dir;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_sputnikCraft = function (block) {
+    var text_nickname = NickName;
+    var item = blockly.JavaScript.variableDB_.getName(block.getFieldValue('item'), blockly.VARIABLE_CATEGORY_NAME);
+
+    var url = text_nickname+'/sputnik/craft/\'+' + item + '+\'/'
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_sputnikmineblock = function (block) {
+    var text_nickname = NickName;
+
+    var url = text_nickname+'/sputnik/mine';
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_sputnikInvSlot = function (block) {
+    var text_nickname = NickName;
+    var slot =  block.getField("slot") ? String(Number(block.getFieldValue("slot"))) : blockly.JavaScript.valueToCode(block, "slot", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(slot) == false)
+        slot = '\'+'+ slot + '+\'';
+
+    var url = text_nickname+'/sputnik/slotinhand/'+slot;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_sputnikBuild = function (block) {
+    var text_nickname = NickName;
+    var dir = block.getFieldValue('dir');
+
+    var url = text_nickname+'/sputnik/build/'+dir;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_unSputnik = function (block) {
+    var text_nickname = NickName;
+
+    var url = text_nickname+'/sputnik/unsputnik';
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_getServer = function (block) {
+    var text_nickname = NickName;
+    var poll_url = pollUrl;
+    var type = block.getFieldValue('Type');
+
+    var response = blockly.JavaScript.nameDB_.getName(block.getFieldValue('response'), blockly.VARIABLE_CATEGORY_NAME);
+    if(type=="map") {
+        var x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : blockly.JavaScript.valueToCode(block, "x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+        var y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : blockly.JavaScript.valueToCode(block, "y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+        var z =  block.getField("z") ? String(Number(block.getFieldValue("z"))) : blockly.JavaScript.valueToCode(block, "z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+        var code = response+'=JSON.parse(getJSON("'+text_nickname+'/'+type+'/'+x+'/'+y+'/'+z+'"));';
+    }
+    else
+        var code = response+'=JSON.parse(getJSON("'+text_nickname+'/'+type+'"));';
+    return code;
+
+};
+
+javascript.javascriptGenerator.minecraft_sputnikProg = function (block) {
+    var text_nickname = NickName;
+    var mob_type = block.getFieldValue('mob_type');
+    var checkbox_zaxvat = block.getFieldValue('zaxvat') === 'TRUE';
+    var otherCode = blockly.JavaScript.statementToCode(block, 'otherCode');
+    var mob_name =  block.getField("mob_name") ? String(Number(block.getFieldValue("mob_name"))) : blockly.JavaScript.valueToCode(block, "mob_name", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    var url = text_nickname+'/sputnik/create/PLAYER/' + mob_name.split("'").join("") + '/false';
+    var url2 = text_nickname+'/sputnik/unsputnik';
+
+    var code1 = timer+"xhr('"+url+"');\n";
+    var code2 = timer+"xhr('"+url2+"');\n";
+    var code = code1+otherCode+'\n'+code2;
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_progSputnikMove = function (block) {
+    var text_nickname = NickName;
+    var checkbox_drone = block.getFieldValue('drone') === 'TRUE';
+    var x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : blockly.JavaScript.valueToCode(block, "x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : blockly.JavaScript.valueToCode(block, "y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var z =  block.getField("z") ? String(Number(block.getFieldValue("z"))) : blockly.JavaScript.valueToCode(block, "z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(x) == false)
+        x = '\'+'+ x + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(y) == false)
+        y = '\'+'+ y + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(z) == false)
+        z = '\'+'+ z + '+\'';
+
+    if(checkbox_drone==true) {
+        x=0;
+        y=0;
+        z=0;
+    }
+
+    var url = text_nickname+'/sputnik/movesputnik/'+x+'/'+y+'/'+z+'/' + checkbox_drone;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_progSputnikAtack = function (block) {
+    var text_nickname = NickName;
+    var mob_type =  block.getField("mob_type") ? String(Number(block.getFieldValue("mob_type"))) : blockly.JavaScript.valueToCode(block, "mob_type", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var radius =  block.getField("radius") ? String(Number(block.getFieldValue("radius"))) : blockly.JavaScript.valueToCode(block, "radius", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(radius) == false)
+        radius = '\'+'+ radius + '+\'';
+
+    var url = text_nickname+'/sputnik/sputnikatack/' + mob_type.split("'").join("") + '/' + radius;
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_tpBot = function (block) {
+    var text_nickname = NickName;
+    var number_x =  block.getField("tpbot_x") ? String(Number(block.getFieldValue("tpdrone_x"))) : blockly.JavaScript.valueToCode(block, "tpbot_x", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_y =  block.getField("tpbot_y") ? String(Number(block.getFieldValue("tpdrone_y"))) : blockly.JavaScript.valueToCode(block, "tpbot_y", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+    var number_z =  block.getField("tpbot_z") ? String(Number(block.getFieldValue("tpdrone_z"))) : blockly.JavaScript.valueToCode(block, "tpbot_z", blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
+
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_x) == false)
+        number_x = '\'+'+ number_x + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_y) == false)
+        number_y = '\'+'+ number_y + '+\'';
+    if(/^(0|-?[1-9]\d{0,5})$/.test(number_z) == false)
+        number_z = '\'+'+ number_z + '+\'';
+
+    var url = text_nickname+'/sputnik/tpbot/' + number_x + '/' + number_y + '/' + number_z;
+    var code = timer+"xhr('"+url+"');\n";;
+
+    return code;
+};
+
+javascript.javascriptGenerator.minecraft_playerToBot = function (block) {
+    var text_nickname = NickName;
+
+    var url = text_nickname+'/sputnik/playerToBot';
+    var code = timer+"xhr('"+url+"');\n";
+    return code;
+};
+
+;// CONCATENATED MODULE: ./src/blocks/minecraft/toolbox.js
+/* harmony default export */ const minecraft_toolbox = ([
+  {
+    "kind": "category",
+    "name": "Minecraft",
+    "colour": "255",
+    "contents": [
+      {
+        "kind": "block",
+        "type": "minecraft_connect"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_coordBlock"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_getServer"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_jsonParse"
+      },
+      /*{
+        "kind": "block",
+        "type": "minecraft_pause"
+      }*/
+    ]
+  },
+  {
+    "kind": "category",
+    "name": "Дрон",
+    "colour": "RED",
+    "contents": [
+      {
+        "kind": "block",
+        "type": "minecraft_createDrone"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_build"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_moveDrone",
+        "inputs": {
+          "step": {
+            "shadow": {
+              "type": "math_number",
+              "fields": {
+                "NUM": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_botToPlayer"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_tpdrone",
+        "inputs": {
+          "tpdrone_x": {
+            "shadow": {
+              "type": "math_number",
+              "fields": {
+                "NUM": 1
+              }
+            }
+          },
+          "tpdrone_y": {
+            "shadow": {
+              "type": "math_number",
+              "fields": {
+                "NUM": 1
+              }
+            }
+          },
+          "tpdrone_z": {
+            "shadow": {
+              "type": "math_number",
+              "fields": {
+                "NUM": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_mineblock"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_movehand"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_setBlockData"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_text"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_playnote"
+      }
+    ]
+  },
+  {
+    "kind": "category",
+    "name": "Бот",
+    "colour": "#ff6161",
+    "contents": [
+      {
+        "kind": "block",
+        "type": "minecraft_droneSputnik"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_tpBot"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_playerToBot"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_momentmove"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_sputnikCraft"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_sputnikmineblock"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_sputnikInvSlot"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_sputnikBuild"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_unSputnik"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_sputnikProg"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_progSputnikMove"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_progSputnikAtack"
+      }
+    ]
+  },
+  {
+    "kind": "category",
+    "name": "Игровой процесс",
+    "colour": "359",
+    "contents": [
+      {
+        "kind": "block",
+        "type": "minecraft_summon"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_weather"
+      },
+      {
+        "kind": "block",
+        "type": "minecraft_time"
+      }
+    ]
+  },
+]);
+
+;// CONCATENATED MODULE: ./src/blocks/minecraft/import.js
+
+
+
+
+
+
+
+inc_X1Blockly.addToolboxCategories(minecraft_toolbox);
+
+;// CONCATENATED MODULE: ./src/blocks/import.js
+
+
+
+inc_X1Blockly.addToolboxCategories(toolbox);
+
 
 ;// CONCATENATED MODULE: ./src/index.js
 
@@ -68003,25 +67310,11 @@ __webpack_require__.g.acorn = __webpack_require__(/*! ./inc/acorn/acorn */ "./sr
 
 
 
-
-
-
-
-inc_X1Blockly.setSettings({
-    toolbox: toolboxCategories["default"]
-});
-
-
-
-
-inc_X1Blockly.use(ModalPlugin);
-inc_X1Blockly.use(BackpackPlugin);
-inc_X1Blockly.use(TypedVariablePlugin);
-inc_X1Blockly.use(MainPlugin);
-
-
 jQuery(function($){
-    inc_X1Blockly.init('.x1-blockly__editor');
+    inc_X1Blockly.init('.x1-blockly__editor').then((r) => {
+        //close playground
+        $('.x1-blockly__editor div:contains(Collapse)').click();
+    });
 
     $('.x1-load-workspace').on('change', function(){
         inc_X1Blockly.loadWorkspace(this);
