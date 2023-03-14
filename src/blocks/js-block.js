@@ -46,9 +46,9 @@ Blockly.Blocks['minecraft_createDrone'] = {
 Blockly.Blocks['minecraft_build'] = {
       init: function () {
       this.appendDummyInput()
-			.appendField(new Blockly.FieldVariable('build_block'), "blocktype")
-			.appendField("напр.")
-			.appendField(new Blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"], ["верх", "UP"], ["низ", "DOWN"]]), "dir");	
+	  .appendField(new Blockly.FieldVariable('build_block'), "blocktype")
+	  .appendField("напр.")
+	  .appendField(new Blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"], ["верх", "UP"], ["низ", "DOWN"]]), "dir");	
 
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
@@ -66,7 +66,7 @@ Blockly.Blocks['minecraft_moveDrone'] = {
             .appendField("Двигать дрона")
             .appendField(new Blockly.FieldDropdown([["вперёд", "front"], ["назад", "back"], ["лево", "left"], ["право", "right"], ["вверх", "up"], ["вниз", "down"]]), "Type")
             .appendField("шаг");
-		this.appendValueInput("step") .setCheck("Number");
+	this.appendValueInput("step") .setCheck("Number");
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
@@ -315,7 +315,7 @@ Blockly.Blocks['minecraft_getServer'] = {
 			this.appendValueInput("z").setCheck("Number");
 		}
 		else {
-			if(this.getInput('x'))
+		if(this.getInput('x'))
 				this.removeInput('x');
 			if(this.getInput('y'))
 				this.removeInput('y');
