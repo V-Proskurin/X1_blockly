@@ -19,8 +19,8 @@ Blockly.Blocks['minecraft_connect'] = {
             .appendField("Инициализировать")
             .appendField("Личный мир")
             .appendField(new Blockly.FieldCheckbox("FALSE"), "world")
-			.appendField("мобы")
-			.appendField(new Blockly.FieldCheckbox("FALSE"), "mob");
+	    .appendField("мобы")
+	    .appendField(new Blockly.FieldCheckbox("FALSE"), "mob");
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
