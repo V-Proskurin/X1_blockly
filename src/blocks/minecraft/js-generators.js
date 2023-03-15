@@ -1,3 +1,5 @@
+import x1blockly from '../../inc/X1Blockly'
+
 import {javascriptGenerator} from "blockly/javascript";
 import * as Blockly from "blockly";
 
