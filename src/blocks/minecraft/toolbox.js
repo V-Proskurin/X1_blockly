@@ -20,10 +20,10 @@ export default [
         "kind": "block",
         "type": "minecraft_jsonParse"
       },
-      /*{
+      {
         "kind": "block",
         "type": "minecraft_pause"
-      }*/
+      }
     ]
   },
   {
