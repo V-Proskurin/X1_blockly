@@ -10,7 +10,7 @@ javascriptGenerator['minecraft_pause'] = function (block) {
 };
 
 javascriptGenerator['minecraft_connect'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var checkbox_world = block.getFieldValue('world') === 'TRUE';
     var checkbox_mob = block.getFieldValue('mob') === 'TRUE';
 
@@ -20,7 +20,7 @@ javascriptGenerator['minecraft_connect'] = function (block) {
 };
 
 javascriptGenerator['minecraft_build'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var dir = block.getFieldValue('dir');
     var blocktype = Blockly.JavaScript.variableDB_.getName(block.getFieldValue('blocktype'), Blockly.VARIABLE_CATEGORY_NAME);
 
@@ -31,7 +31,7 @@ javascriptGenerator['minecraft_build'] = function (block) {
 };
 
 javascriptGenerator['minecraft_createDrone'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var url = text_nickname+'/drone/create';
     var code = timer+"xhr('"+url+"');\n";
     return code;
@@ -39,7 +39,7 @@ javascriptGenerator['minecraft_createDrone'] = function (block) {
 
 
 javascriptGenerator['minecraft_moveDrone'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var type = block.getFieldValue('Type');
     var step =  block.getField("step") ? String(Number(block.getFieldValue("step"))) : Blockly.JavaScript.valueToCode(block, "step", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
 
@@ -51,7 +51,7 @@ javascriptGenerator['minecraft_moveDrone'] = function (block) {
 };
 
 javascriptGenerator['minecraft_botToPlayer'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var type = block.getFieldValue('Type');
     var url = text_nickname+'/drone/botToPlayer/' + type;
     var code = timer+"xhr('"+url+"');\n";
@@ -59,7 +59,7 @@ javascriptGenerator['minecraft_botToPlayer'] = function (block) {
 };
 
 javascriptGenerator['minecraft_tpdrone'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var number_x =  block.getField("tpdrone_x") ? String(Number(block.getFieldValue("tpdrone_x"))) : Blockly.JavaScript.valueToCode(block, "tpdrone_x", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_y =  block.getField("tpdrone_y") ? String(Number(block.getFieldValue("tpdrone_y"))) : Blockly.JavaScript.valueToCode(block, "tpdrone_y", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_z =  block.getField("tpdrone_z") ? String(Number(block.getFieldValue("tpdrone_z"))) : Blockly.JavaScript.valueToCode(block, "tpdrone_z", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
@@ -78,7 +78,7 @@ javascriptGenerator['minecraft_tpdrone'] = function (block) {
 };
 
 javascriptGenerator['minecraft_summon'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var type = block.getFieldValue('Type');
 
     var url = text_nickname+'/drone/summon/' + type;
@@ -89,7 +89,7 @@ javascriptGenerator['minecraft_summon'] = function (block) {
 
 
 javascriptGenerator['minecraft_time'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var time = block.getFieldValue('time');
 
     var url = text_nickname+'/drone/setTime/' + time;
@@ -99,7 +99,7 @@ javascriptGenerator['minecraft_time'] = function (block) {
 };
 
 javascriptGenerator['minecraft_weather'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var type = block.getFieldValue('Type');
     var duration = block.getFieldValue('duration');
 
@@ -110,7 +110,7 @@ javascriptGenerator['minecraft_weather'] = function (block) {
 };
 
 javascriptGenerator['minecraft_text'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var color = block.getFieldValue('color');
     var mtexts =  block.getField("mctext") ? String(Number(block.getFieldValue("mctext"))) : Blockly.JavaScript.valueToCode(block, "mctext", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
 
@@ -122,7 +122,7 @@ javascriptGenerator['minecraft_text'] = function (block) {
 
 
 javascriptGenerator['minecraft_mineblock'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
 
     var url = text_nickname+'/drone/mine';
     var code = timer+"xhr('"+url+"');\n";
@@ -130,7 +130,7 @@ javascriptGenerator['minecraft_mineblock'] = function (block) {
 };
 
 javascriptGenerator['minecraft_craft'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var item = block.getFieldValue('item');
     var count = block.getFieldValue('count');
 
@@ -140,7 +140,7 @@ javascriptGenerator['minecraft_craft'] = function (block) {
 };
 
 javascriptGenerator['minecraft_playnote'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var octave = block.getFieldValue('octave');
     var tone = block.getFieldValue('tone');
     var instr = block.getFieldValue('instrument');
@@ -151,7 +151,7 @@ javascriptGenerator['minecraft_playnote'] = function (block) {
 };
 
 javascriptGenerator['minecraft_if'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var whatif = block.getFieldValue('whatif');
     var valif = Blockly.JavaScript.variableDB_.getName(block.getFieldValue('valif'), Blockly.VARIABLE_CATEGORY_NAME);
     var whatthen = block.getFieldValue('whatthen');
@@ -163,7 +163,7 @@ javascriptGenerator['minecraft_if'] = function (block) {
 };
 
 javascriptGenerator['minecraft_movehand'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var number_x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : Blockly.JavaScript.valueToCode(block, "x", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : Blockly.JavaScript.valueToCode(block, "y", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_z =  block.getField("z") ? String(Number(block.getFieldValue("z"))) : Blockly.JavaScript.valueToCode(block, "z", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
@@ -184,7 +184,7 @@ javascriptGenerator['minecraft_movehand'] = function (block) {
 };
 
 javascriptGenerator['minecraft_getdroneblock'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var poll_url = pollUrl;
 
     var otherCode = Blockly.JavaScript.statementToCode(block, 'otherCode');
@@ -197,7 +197,7 @@ javascriptGenerator['minecraft_getdroneblock'] = function (block) {
 };
 
 javascriptGenerator['minecraft_setBlockData'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var blockData =  Blockly.JavaScript.variableDB_.getName(block.getFieldValue('blockData'), Blockly.VARIABLE_CATEGORY_NAME);
 
     var url = text_nickname+'/drone/setblockdata/\'+' + blockData + '.split("=").join("-")+\'';
@@ -240,7 +240,7 @@ javascriptGenerator['minecraft_coordBlock'] = function (block) {
 };
 
 javascriptGenerator['minecraft_droneSputnik'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var mob_type = block.getFieldValue('mob_type');
 
     var checkbox_zaxvat = "false";
@@ -255,7 +255,7 @@ javascriptGenerator['minecraft_droneSputnik'] = function (block) {
 };
 
 javascriptGenerator['minecraft_momentmove'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var dir = block.getFieldValue('dir');
 
     var url = text_nickname+'/sputnik/momentmove/'+dir;
@@ -264,7 +264,7 @@ javascriptGenerator['minecraft_momentmove'] = function (block) {
 };
 
 javascriptGenerator['minecraft_sputnikCraft'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var item = Blockly.JavaScript.variableDB_.getName(block.getFieldValue('item'), Blockly.VARIABLE_CATEGORY_NAME);
 
     var url = text_nickname+'/sputnik/craft/\'+' + item + '+\'/'
@@ -273,7 +273,7 @@ javascriptGenerator['minecraft_sputnikCraft'] = function (block) {
 };
 
 javascriptGenerator['minecraft_sputnikmineblock'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
 
     var url = text_nickname+'/sputnik/mine';
     var code = timer+"xhr('"+url+"');\n";
@@ -281,7 +281,7 @@ javascriptGenerator['minecraft_sputnikmineblock'] = function (block) {
 };
 
 javascriptGenerator['minecraft_sputnikInvSlot'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var slot =  block.getField("slot") ? String(Number(block.getFieldValue("slot"))) : Blockly.JavaScript.valueToCode(block, "slot", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
 
     if(/^(0|-?[1-9]\d{0,5})$/.test(slot) == false)
@@ -293,7 +293,7 @@ javascriptGenerator['minecraft_sputnikInvSlot'] = function (block) {
 };
 
 javascriptGenerator['minecraft_sputnikBuild'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var dir = block.getFieldValue('dir');
 
     var url = text_nickname+'/sputnik/build/'+dir;
@@ -302,7 +302,7 @@ javascriptGenerator['minecraft_sputnikBuild'] = function (block) {
 };
 
 javascriptGenerator['minecraft_unSputnik'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
 
     var url = text_nickname+'/sputnik/unsputnik';
     var code = timer+"xhr('"+url+"');\n";
@@ -310,7 +310,7 @@ javascriptGenerator['minecraft_unSputnik'] = function (block) {
 };
 
 javascriptGenerator['minecraft_getServer'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var poll_url = pollUrl;
     var type = block.getFieldValue('Type');
 
@@ -328,7 +328,7 @@ javascriptGenerator['minecraft_getServer'] = function (block) {
 };
 
 javascriptGenerator['minecraft_sputnikProg'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var mob_type = block.getFieldValue('mob_type');
     var checkbox_zaxvat = block.getFieldValue('zaxvat') === 'TRUE';
     var otherCode = Blockly.JavaScript.statementToCode(block, 'otherCode');
@@ -344,7 +344,7 @@ javascriptGenerator['minecraft_sputnikProg'] = function (block) {
 };
 
 javascriptGenerator['minecraft_progSputnikMove'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var checkbox_drone = block.getFieldValue('drone') === 'TRUE';
     var x =  block.getField("x") ? String(Number(block.getFieldValue("x"))) : Blockly.JavaScript.valueToCode(block, "x", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var y =  block.getField("y") ? String(Number(block.getFieldValue("y"))) : Blockly.JavaScript.valueToCode(block, "y", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
@@ -369,7 +369,7 @@ javascriptGenerator['minecraft_progSputnikMove'] = function (block) {
 };
 
 javascriptGenerator['minecraft_progSputnikAtack'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var mob_type =  block.getField("mob_type") ? String(Number(block.getFieldValue("mob_type"))) : Blockly.JavaScript.valueToCode(block, "mob_type", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var radius =  block.getField("radius") ? String(Number(block.getFieldValue("radius"))) : Blockly.JavaScript.valueToCode(block, "radius", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
 
@@ -382,7 +382,7 @@ javascriptGenerator['minecraft_progSputnikAtack'] = function (block) {
 };
 
 javascriptGenerator['minecraft_tpBot'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
     var number_x =  block.getField("tpbot_x") ? String(Number(block.getFieldValue("tpdrone_x"))) : Blockly.JavaScript.valueToCode(block, "tpbot_x", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_y =  block.getField("tpbot_y") ? String(Number(block.getFieldValue("tpdrone_y"))) : Blockly.JavaScript.valueToCode(block, "tpbot_y", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
     var number_z =  block.getField("tpbot_z") ? String(Number(block.getFieldValue("tpdrone_z"))) : Blockly.JavaScript.valueToCode(block, "tpbot_z", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0"   ;
@@ -401,7 +401,7 @@ javascriptGenerator['minecraft_tpBot'] = function (block) {
 };
 
 javascriptGenerator['minecraft_playerToBot'] = function (block) {
-    var text_nickname = NickName;
+    var text_nickname = x1blockly.user.nickname;
 
     var url = text_nickname+'/sputnik/playerToBot';
     var code = timer+"xhr('"+url+"');\n";
