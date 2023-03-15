@@ -1,5 +1,19 @@
 import * as Blockly from "blockly";
 
+Blockly.Blocks['minecraft_pause'] = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField("Пауза")
+            .appendField(new Blockly.FieldNumber(100), "ms")
+            .appendField("(мс)");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+        this.setTooltip("Приостанавливает выполнение программы на указанное время");
+        this.setHelpUrl("");
+    }
+};
+
 Blockly.Blocks['minecraft_connect'] = {
     init: function () {
         this.appendDummyInput()
