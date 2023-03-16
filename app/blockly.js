@@ -68008,8 +68008,6 @@ javascript.javascriptGenerator.minecraft_playerToBot = function (block) {
 ]);
 
 ;// CONCATENATED MODULE: ./src/blocks/minecraft/import.js
-Object(function webpackMissingModule() { var e = new Error("Cannot find module './acorn-minecraft'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
-
 
 
 
