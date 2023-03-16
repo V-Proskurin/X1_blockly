@@ -141,15 +141,12 @@ export default class X1BlocklyExecution {
         const prevBlockId = this.currentBlockId;
 
         const json = JSON.stringify(serialize(this.interpreter));
-        if (this.dmp && this.serializationStack.length) {
-            this.compressLastSerialization(json);
-        }
 
-        this.serializationStack.push({
+        const prevStepSerialized = {
             json: json,
             delta: null,
             highlight: this.currentBlockId
-        });
+        };
 
         let hasMoreCode;
 
@@ -162,19 +159,19 @@ export default class X1BlocklyExecution {
             // or the code completes or errors.
         } while (hasMoreCode && prevBlockId === this.currentBlockId);
 
-        if (!hasMoreCode) {
-            this.currentBlockId = 0;
-            this.interpreter = null;
-            this.serializationStack.length = 0;
+        if (hasMoreCode) {
+            if (this.dmp && this.serializationStack.length) {
+                this.compressLastSerialization(prevStepSerialized.json);
+            }
+            this.serializationStack.push(prevStepSerialized);
         }
-
         return hasMoreCode;
     }
 
     backward() {
         const serialization = this.serializationStack.pop();
 
-        if (!this.serializationStack.length || !serialization) {
+        if (!serialization) {
             return false;
         }
 
