@@ -162,6 +162,12 @@ export default class X1BlocklyExecution {
             // or the code completes or errors.
         } while (hasMoreCode && prevBlockId === this.currentBlockId);
 
+        if (!hasMoreCode) {
+            this.currentBlockId = 0;
+            this.interpreter = null;
+            this.serializationStack.length = 0;
+        }
+
         return hasMoreCode;
     }
 
