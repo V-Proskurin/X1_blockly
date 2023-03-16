@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import {createPlayground} from "@blockly/dev-tools";
 import {download, getFileContent} from "./helpers";
+import X1BlocklyExecution from "./X1BlocklyExecution";
 
 class X1Blockly {
     constructor() {
@@ -15,7 +16,7 @@ class X1Blockly {
         this.updateData();
     }
 
-    updateData(){
+    updateData() {
         this.data = window.x1data;
 
         if (typeof this.data.user === 'object') {
@@ -46,6 +47,8 @@ class X1Blockly {
                 colour: '#ccc',
                 snap: true,
             },
+        }).then(() => {
+            this.execution = new X1BlocklyExecution(this.workspace);
         });
     }
 
@@ -97,8 +100,21 @@ class X1Blockly {
         fileinput.value = null;
     }
 
-    addToolboxCategories(toolboxCategories){
+    addToolboxCategories(toolboxCategories) {
         this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
+    }
+
+    run () {
+        this.execution.run();
+    }
+
+    forward () {
+        this.execution.forward();
+    }
+
+    backward () {
+
+        this.execution.backward();
     }
 }
 

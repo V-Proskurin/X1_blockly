@@ -3,6 +3,15 @@
 
     <div class="x1-blockly__actions">
         <div class="x1-blockly__action">
+            <a class="x1-button x1-run" type="button">Запустить</a>
+        </div>
+        <div class="x1-blockly__action">
+            <a class="x1-button x1-forward" type="button">Шаг вперед</a>
+        </div>
+        <div class="x1-blockly__action">
+            <a class="x1-button x1-backward" type="button">Шаг назад</a>
+        </div>
+        <div class="x1-blockly__action">
             <label class="x1-label-input x1-label-input_file">
                 <a class="x1-button">
                     Загрузить
