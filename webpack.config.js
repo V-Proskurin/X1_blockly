@@ -27,7 +27,7 @@ require('dotenv').config();
 module.exports = env => {
     let config;
 
-    if (process.env.MODE === 'local') {
+    if (process.env.MODE === 'local' && !env.production) {
         config = require('./webpack.local.config');
     } else {
         const path = require('path');
