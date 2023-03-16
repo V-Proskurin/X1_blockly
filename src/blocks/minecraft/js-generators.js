@@ -3,8 +3,8 @@ import x1blockly from '../../inc/X1Blockly'
 import {javascriptGenerator} from "blockly/javascript";
 import * as Blockly from "blockly";
 
-const baseUrl = 'https://x1team.ru:8090/cmd?name=';
-const jsonUrl = 'https://x1team.ru:8090/poll?name=';
+const baseUrl = 'https://x1team.ru:8088/cmd?name=';
+const jsonUrl = 'https://x1team.ru:8088/poll?name=';
 const timer = 'pause(100); \n'
 
 javascriptGenerator['minecraft_pause'] = function (block) {
