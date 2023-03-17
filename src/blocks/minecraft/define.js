@@ -47,6 +47,7 @@ Blockly.Blocks['minecraft_createDrone'] = {
 Blockly.Blocks['minecraft_build'] = {
     init: function () {
         this.appendDummyInput()
+            .appendField("Строить")
             .appendField(new Blockly.FieldVariable('build_block'), "blocktype")
             .appendField("напр.")
             .appendField(new Blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"], ["верх", "UP"], ["низ", "DOWN"]]), "dir");
