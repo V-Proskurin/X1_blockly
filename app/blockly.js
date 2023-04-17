@@ -66823,6 +66823,7 @@ blockly.Blocks.minecraft_createDrone = {
 blockly.Blocks.minecraft_build = {
     init: function () {
         this.appendDummyInput()
+            .appendField("Строить")
             .appendField(new blockly.FieldVariable('build_block'), "blocktype")
             .appendField("напр.")
             .appendField(new blockly.FieldDropdown([["восток", "EAST"], ["север", "NORTH"], ["юг", "SOUTH"], ["запад", "WEST"], ["верх", "UP"], ["низ", "DOWN"]]), "dir");
@@ -67415,8 +67416,8 @@ blockly.Blocks.minecraft_playerToBot = {
 
 
 
-const baseUrl = '';
-const jsonUrl = '';
+const baseUrl = 'https://x1team.ru:8088/cmd?name=';
+const jsonUrl = 'https://x1team.ru:8088/poll?name=';
 const timer = 'pause(100); \n'
 
 javascript.javascriptGenerator.minecraft_pause = function (block) {
