@@ -140,7 +140,7 @@ class X1Blockly
     public function shortcode($atts, $content, $tag)
     {
         wp_enqueue_style('x1-blockly', $this->baseUrl . '/app/blockly.css', [], $this->version);
-        wp_enqueue_script('x1-blockly', $this->baseUrl . '/app/blockly.js', [], $this->version, true);
+        wp_enqueue_script('x1-blockly', $this->baseUrl . '/app/blockly.min.js', [], $this->version, true);
 
         $user = wp_get_current_user();
 

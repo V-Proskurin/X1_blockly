@@ -1,16 +1,22 @@
 import * as Blockly from "blockly";
 import {createPlayground} from "@blockly/dev-tools";
 import {download, getFileContent} from "./helpers";
+import X1BlocklyExecution from "./X1BlocklyExecution";
 
 class X1Blockly {
     constructor() {
-        this.settings = {};
+        this.settings = {
+            toolbox: {
+                "kind": "categoryToolbox",
+                "contents": []
+            }
+        };
         this.plugins = [];
 
         this.updateData();
     }
 
-    updateData(){
+    updateData() {
         this.data = window.x1data;
 
         if (typeof this.data.user === 'object') {
@@ -29,10 +35,11 @@ class X1Blockly {
     init(selector) {
         this.container = document.querySelector(selector);
 
-        createPlayground(this.container, (container, options) => {
+        return createPlayground(this.container, (container, options) => {
+            options.toolbox = this.settings.toolbox;
             return this.createWorkspace(container, options);
         }, {
-            debugEnabled: true,
+            debugEnabled: false,
             toolbox: this.settings.toolbox,
             grid: {
                 spacing: 25,
@@ -40,6 +47,8 @@ class X1Blockly {
                 colour: '#ccc',
                 snap: true,
             },
+        }).then(() => {
+            this.execution = new X1BlocklyExecution(this.workspace);
         });
     }
 
@@ -89,6 +98,23 @@ class X1Blockly {
         });
 
         fileinput.value = null;
+    }
+
+    addToolboxCategories(toolboxCategories) {
+        this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
+    }
+
+    run () {
+        this.execution.run();
+    }
+
+    forward () {
+        this.execution.forward();
+    }
+
+    backward () {
+
+        this.execution.backward();
     }
 }
 
