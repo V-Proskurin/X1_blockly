@@ -22,6 +22,50 @@ class X1Blockly
             require_once(ABSPATH . 'wp-admin/includes/plugin.php');
         }
 
+        $protocol = (!empty($_SERVER['HTTPS']) && 'off' !== strtolower($_SERVER['HTTPS']) ? 'https://' : 'http://');
+
+        $BASE_URL =  $protocol. $_SERVER["SERVER_NAME"];
+
+        if ( ! function_exists('is_user_logged_in') ) {
+            require_once( ABSPATH . WPINC . '/pluggable.php');
+        }
+        $current_user = (is_user_logged_in()) ? wp_get_current_user() : false;
+
+        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/blockly-minecraft' ) ) {
+            if ( $current_user ) {
+
+                wp_safe_redirect( home_url('account') . '?redirect_to=open-blockly' );
+                exit;
+            }
+        }
+        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/open-blockly' ) ) {
+            if ( $current_user ) {
+
+                $nick = get_user_meta($current_user->ID, 'nickname', true );
+                $response = wp_remote_get( $BASE_URL . '/serv_auth/auth.php?user='.$nick);
+
+                if ( is_array($response) && $response['response']['code'] == '200' ) {
+
+                    $url = home_url('blockly-minecraft/');
+
+                    wp_safe_redirect( $url );
+                    exit;
+
+                } else {
+                    wp_safe_redirect( home_url() );
+                    exit;
+
+                }
+            } else {
+                wp_safe_redirect( home_url('account') . '?redirect_to=open-blockly' );
+                exit;
+            }
+        }
+
+        if (!function_exists('get_plugin_data')) {
+            require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        }
+
         $this->baseUrl = plugins_url('', __DIR__);
         $this->basePath = dirname(__DIR__);
         $this->pluginData = get_plugin_data($this->basePath . '/index.php');
