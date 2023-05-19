@@ -31,8 +31,8 @@ class X1Blockly
         }
         $current_user = (is_user_logged_in()) ? wp_get_current_user() : false;
 
-        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/blockly-minecraft' ) ) {
-            if ( $current_user ) {
+        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/blockly' ) ) {
+            if ( !$current_user ) {
 
                 wp_safe_redirect( home_url('account') . '?redirect_to=open-blockly' );
                 exit;
@@ -40,13 +40,12 @@ class X1Blockly
         }
         if ( false !== strpos( $_SERVER['REQUEST_URI'], '/open-blockly' ) ) {
             if ( $current_user ) {
-
                 $nick = get_user_meta($current_user->ID, 'nickname', true );
                 $response = wp_remote_get( $BASE_URL . '/serv_auth/auth.php?user='.$nick);
 
                 if ( is_array($response) && $response['response']['code'] == '200' ) {
 
-                    $url = home_url('blockly-minecraft/');
+                    $url = home_url('blockly/');
 
                     wp_safe_redirect( $url );
                     exit;
