@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
 /*************************************
  * Blocks
  *************************************/
@@ -36,7 +38,7 @@
  * Layout
  *************************************/
 .x1-blockly{
-    width: 100%;
+    width: calc(100% - 57px);
 }
 
 .x1-blockly__editor{
@@ -56,4 +58,247 @@
 
 .x1-blockly__action:last-child{
     margin-right: 0;
+}
+
+
+/*Стили всплывашки переверните устройство*/
+.popup-rotate-device-container {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    top: 0;
+    left: 0;
+    overflow: auto;
+    background-color: #fff;
+    z-index: 999;
+}
+
+.popup-rotate-device-promotion {
+    max-width: 620px;
+    height: 434px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: 990;
+    -webkit-animation-duration: .3s;
+    animation-duration: .3s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+    -webkit-animation-name: fadeIn;
+    animation-name: fadeIn;
+    border-radius: 25px;
+    object-fit: contain;
+}
+
+.popup-rotate-device-img {
+    width: 100%;
+    object-fit: cover;
+    z-index: 991;
+}
+
+#popup-rotate-device-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: #114734;
+    color: #fff;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+@-webkit-keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media screen and (max-width: 550px) {
+
+    .popup-rotate-device-container {
+        display: block;
+    }
+
+    .popup-rotate-device-promotion {
+        width: 90vw;
+        height: 85vw;
+    }
+
+    .popup-rotate-device-img {
+        width: 60%;
+        object-fit: contain;
+        object-position: top;
+    }
+
+    .popup-rotate-device-text {
+        padding-top: 30px;
+        font-size: 5vw;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+}
+/*Конец стилей всплывашки переверните устройство*/
+
+/*Стили всплывающего меню*/
+.popup-menu-container {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow: auto;
+    background-color: #0000003b;
+    backdrop-filter: blur(10px);
+    z-index: 999;
+}
+
+.popup-col-container {
+    max-width: 75vw;
+    width: 300px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    background-color: #fff;
+    z-index: 999;
+    -webkit-animation-duration: .3s;
+    animation-duration: .3s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+    -webkit-animation-name: fadeIn;
+    animation-name: fadeIn;
+    border-radius: 0px;
+}
+
+.popup-row-menu {
+    margin: 10% 0% 0% 7%;
+}
+
+.logo-img {
+    width: 100%;
+    max-width: 70px;
+}
+
+.menu-text {
+    margin-top: 20px;
+}
+
+.menu-wrapper {
+    margin-bottom: 10px;
+}
+
+.menu-wrapper a {
+    font-size: 16px;
+    font-weight: 500;
+    color: #000000;
+    font-family: Montserrat, sans-serif;
+}
+
+.close-btn {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    right: 0;
+    background-color: #D7D7D7;
+    padding: 3px;
+}
+
+@-webkit-keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media screen and (max-width: 800px) {
+}
+
+/*Конец стилей всплывающего меню*/
+
+
+#right-panel {
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 57px;
+    flex-direction: column;
+    align-items: center;
+    border-left: 1px solid #dfdfdf;
+}
+
+.material-icons.svelte-89l9x3 {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-size: 24px;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    border-radius: 100%;
+    color: white;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 37%);
+    transition: box-shadow .3s ease-in-out;
+    text-align: center;
+    font-weight: 500;
+    background-color: #0e24a7;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin-top: 12px;
+}
+
+.play-button.svelte-1pir4hi {
+    position: absolute;
+    border-radius: 100%;
+    color: white;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 37%);
+    transition: box-shadow .3s ease-in-out;
+    text-align: center;
+    font-weight: 500;
+    background-color: #0097A7;
+    cursor: pointer;
+    bottom: 10px;
+    right: 8px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
 }
