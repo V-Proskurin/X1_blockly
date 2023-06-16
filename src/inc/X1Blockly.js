@@ -100,6 +100,11 @@ class X1Blockly {
         fileinput.value = null;
     }
 
+    clearWorkspace() {
+        const serializer = new Blockly.serialization.blocks.BlockSerializer();
+        serializer.clear(this.workspace);
+    }
+
     addToolboxCategories(toolboxCategories) {
         this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
     }
