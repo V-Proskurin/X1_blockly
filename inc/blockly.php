@@ -72,22 +72,7 @@ class X1Blockly
 
         add_shortcode('x1-blockly', [$this, 'shortcode']);
 
-        add_action('wp_ajax_x1_blockly_get_cloud_file', [$this, 'getCloudFile']);
-        add_action('wp_ajax_nopriv_x1_blockly_get_cloud_file', [$this, 'getCloudFile']);
-
-        add_action('wp_ajax_x1_blockly_upload_cloud_file', [$this, 'uploadCloudFile']);
-        add_action('wp_ajax_nopriv_x1_blockly_upload_cloud_file', [$this, 'uploadCloudFile']);
-    }
-
-    public function getCloudFile()
-    {
-        $path = $_POST['path'];
-        \X1Blockly\X1YandexCloud::outputFile($path);
-    }
-
-    public function uploadCloudFile()
-    {
-        \X1Blockly\X1YandexCloud::uploadFile();
+        new \X1Blockly\X1YandexCloud();
     }
 
     public function autoloader($className)
@@ -157,6 +142,8 @@ class X1Blockly
      */
     public function shortcode($atts, $content, $tag)
     {
+        do_action('x1-blockly-before-shortcode');
+
         wp_enqueue_style('x1-blockly', $this->baseUrl . '/app/blockly.css', [], $this->version);
         wp_enqueue_script('x1-blockly', $this->baseUrl . '/app/blockly.min.js', [], $this->version, true);
 
