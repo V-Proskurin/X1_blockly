@@ -302,3 +302,7 @@
     height: 40px;
     line-height: 40px;
 }
+
+.x1-blockly__filemanager [data-action="paste"]{
+    display: none;
+}

@@ -54,10 +54,14 @@ jQuery(function($){
         const $parent = $button.closest('.x1-blockly-upload');
         const $input = $parent.find('.x1-blockly-upload__input');
 
-        const filename = $input.val();
+        let filename = $input.val();
 
         if (!filename) {
             return;
+        }
+
+        if (!/\.json$/.test(filename)) {
+            filename += '.json';
         }
 
         const path = $('input[name="x1folder"]').val();
@@ -82,35 +86,38 @@ jQuery(function($){
             processData: false,
             method: 'post',
             success: function(response){
-                window.location.reload();
+                x1YaCloudStorage.refreshFilesBrowser();
             }
         });
     });
 
-    $(document).on('click', '.x1-blockly-fm-add', function(e) {
-        const $this = $(this);
-        const path = $this.data('fullpath');
+    $(document).on('click', '[data-action="x1-blockly-add"]', function(e) {
+        const selectedFiles = getSelectedFiles();
 
-        loadCloudFileToWorkspace(path);
+        if (!selectedFiles.length) {
+            return;
+        }
 
-        e.stopImmediatePropagation();
-        e.preventDefault();
+        selectedFiles.forEach(function(file){
+            loadCloudFileToWorkspace(file.fullpath);
+        });
 
         return false;
     });
 
-    $(document).on('click', '.x1-blockly-fm-open', function(e) {
-        const $this = $(this);
-        const path = $this.data('fullpath');
+    $(document).on('click', '[data-action="x1-blockly-open"]', function(e) {
+        const selectedFiles = getSelectedFiles();
+        const selectedFile = selectedFiles.shift();
 
-        loadCloudFileToWorkspace(path, true).then((result) => {
+        if (typeof selectedFile === 'undefined') {
+            return;
+        }
+
+        loadCloudFileToWorkspace(selectedFile.fullpath, true).then((result) => {
             if (result) {
-                updateFilename(this);
+                setFilename(selectedFile.name);
             }
         });
-
-        e.stopImmediatePropagation();
-        e.preventDefault();
 
         return false;
     });
@@ -125,14 +132,27 @@ jQuery(function($){
         return $filename.text();
     }
 
-    function updateFilename($elem){
-        const filename = getFilename($elem);
-
-        setFilename(filename);
-    }
-
     function setFilename(filename){
         $('.x1-blockly-upload__input').val(filename);
+    }
+
+    function getSelectedFiles(){
+        const files = [];
+
+        $('.x1-blockly__filemanager .file-item.selected').each(function(){
+            const $file = $(this);
+            const path = $file.data('filepath');
+            const name = $file.data('filename');
+            const fullpath = path + name;
+
+            files.push({
+                path: path,
+                name: name,
+                fullpath: fullpath
+            });
+        });
+
+        return files;
     }
 
     function loadCloudFileToWorkspace(path, clear = false){
@@ -146,6 +166,10 @@ jQuery(function($){
         }).then(function(response){
             if (clear) {
                 x1blockly.clearWorkspace();
+            }
+
+            if (typeof response !== 'string') {
+                response = JSON.stringify(response);
             }
 
             return x1blockly.importWorkspace(response);
