@@ -66517,6 +66517,11 @@ class X1Blockly {
         fileinput.value = null;
     }
 
+    clearWorkspace() {
+        const serializer = new blockly.serialization.blocks.BlockSerializer();
+        serializer.clear(this.workspace);
+    }
+
     addToolboxCategories(toolboxCategories) {
         this.settings.toolbox.contents = this.settings.toolbox.contents.concat(toolboxCategories);
     }
@@ -68062,6 +68067,125 @@ jQuery(function($){
     $('.x1-save-workspace').on('click', function(){
         inc_X1Blockly.saveWorkspace();
     });
+
+    $(document).on('x1yf-folder-selected', function(){
+        $('.x1yc-folder__file').each(function(){
+            const $operations = $(this).find('.x1yc-folder__operations');
+            const $operation = $('.file_operations.delete', $operations);
+            const dataFullpath = $operation.data('fullpath');
+            const dataFilename = $operation.data('filename');
+            let blocklyOperations = '';
+
+            ['Add', 'Open'].forEach(function(type){
+                blocklyOperations += `<div class="file_operations ${type.toLowerCase()} x1-blockly-fm-${type.toLowerCase()}" data-type="file-${type}" data-filename="${dataFilename}" data-fullpath="${dataFullpath}">${type}</div>`;
+            })
+
+            $operations.prepend(blocklyOperations);
+        })
+    });
+
+    $(document).on('click', '.x1-blockly-upload__button', function(){
+        const $button = $(this);
+        const $parent = $button.closest('.x1-blockly-upload');
+        const $input = $parent.find('.x1-blockly-upload__input');
+
+        const filename = $input.val();
+
+        if (!filename) {
+            return;
+        }
+
+        const path = $('input[name="x1folder"]').val();
+
+        const json = inc_X1Blockly.exportWorkspace();
+        const jsonBytes = new TextEncoder().encode(json);
+        const jsonBlob = new Blob([jsonBytes], {
+            type: "application/json;charset=utf-8"
+        });
+
+        const formData = new FormData();
+
+        formData.append('folder_path', path);
+        formData.append('x1file', jsonBlob, filename);
+        formData.append('filename', filename);
+        formData.append('action', 'x1_blockly_upload_cloud_file');
+
+        $.ajax({
+            url: '/wp-admin/admin-ajax.php',
+            data: formData,
+            contentType: false,
+            processData: false,
+            method: 'post',
+            success: function(response){
+                window.location.reload();
+            }
+        });
+    });
+
+    $(document).on('click', '.x1-blockly-fm-add', function(e) {
+        const $this = $(this);
+        const path = $this.data('fullpath');
+
+        loadCloudFileToWorkspace(path);
+
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        return false;
+    });
+
+    $(document).on('click', '.x1-blockly-fm-open', function(e) {
+        const $this = $(this);
+        const path = $this.data('fullpath');
+
+        loadCloudFileToWorkspace(path, true).then((result) => {
+            if (result) {
+                updateFilename(this);
+            }
+        });
+
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        return false;
+    });
+
+    $(document).on('click', '.x1yc-folder__file__file, .x1yc-folder__file__img', function(e) {
+        updateFilename(this);
+    });
+
+    function getFilename($elem){
+        const $label = $($elem).closest('label');
+        const $filename = $label.find('.x1yc-folder__file__file');
+        return $filename.text();
+    }
+
+    function updateFilename($elem){
+        const filename = getFilename($elem);
+
+        setFilename(filename);
+    }
+
+    function setFilename(filename){
+        $('.x1-blockly-upload__input').val(filename);
+    }
+
+    function loadCloudFileToWorkspace(path, clear = false){
+        return $.ajax({
+            url: '/wp-admin/admin-ajax.php',
+            data: {
+                action: 'x1_blockly_get_cloud_file',
+                path: path
+            },
+            method: 'post',
+        }).then(function(response){
+            if (clear) {
+                inc_X1Blockly.clearWorkspace();
+            }
+
+            return inc_X1Blockly.importWorkspace(response);
+        });
+    }
 });
 })();
 

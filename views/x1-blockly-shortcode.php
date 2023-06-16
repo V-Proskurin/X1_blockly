@@ -1,5 +1,16 @@
 <div class="x1-blockly">
     <div class="x1-blockly__editor"></div>
+    
+    <div class="x1-blockly__upload">
+        <div class="x1-blockly-upload">
+            <input type="text" class="x1-blockly-upload__input" placeholder="filename">
+            <input type="button" class="x1-blockly-upload__button" value="Сохранить">
+        </div>
+    </div>
+
+    <div class="x1-blockly__filemanager">
+        <?php \X1Blockly\X1YandexCloud::viewExplorer(); ?>
+    </div>
 </div>
 
 <!--Блок всплывающего меню-->

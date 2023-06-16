@@ -3,7 +3,7 @@
 class X1Blockly
 {
     const PLUGIN_SLUG = 'x1-blockly';
-    const AUTOLOADER_PREFIX = 'x1-blockly';
+    const AUTOLOADER_PREFIX = 'X1Blockly';
 
     protected static $instance;
 
@@ -24,39 +24,37 @@ class X1Blockly
 
         $protocol = (!empty($_SERVER['HTTPS']) && 'off' !== strtolower($_SERVER['HTTPS']) ? 'https://' : 'http://');
 
-        $BASE_URL =  $protocol. $_SERVER["SERVER_NAME"];
+        $BASE_URL = $protocol . $_SERVER["SERVER_NAME"];
 
-        if ( ! function_exists('is_user_logged_in') ) {
-            require_once( ABSPATH . WPINC . '/pluggable.php');
+        if (!function_exists('is_user_logged_in')) {
+            require_once(ABSPATH . WPINC . '/pluggable.php');
         }
         $current_user = (is_user_logged_in()) ? wp_get_current_user() : false;
 
-        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/blockly' ) ) {
-            if ( !$current_user ) {
-
-                wp_safe_redirect( home_url('account') . '?redirect_to=open-blockly' );
+        if (false !== strpos($_SERVER['REQUEST_URI'], '/blockly')) {
+            if (!$current_user) {
+                wp_safe_redirect(home_url('account') . '?redirect_to=open-blockly');
                 exit;
             }
         }
-        if ( false !== strpos( $_SERVER['REQUEST_URI'], '/open-blockly' ) ) {
-            if ( $current_user ) {
-                $nick = get_user_meta($current_user->ID, 'nickname', true );
-                $response = wp_remote_get( $BASE_URL . '/serv_auth/auth.php?user='.$nick);
+        if (false !== strpos($_SERVER['REQUEST_URI'], '/open-blockly')) {
+            if ($current_user) {
+                $nick = get_user_meta($current_user->ID, 'nickname', true);
+                $response = wp_remote_get($BASE_URL . '/serv_auth/auth.php?user=' . $nick);
 
-                if ( is_array($response) && $response['response']['code'] == '200' ) {
+                if (is_array($response) && $response['response']['code'] == '200') {
 
                     $url = home_url('blockly/');
 
-                    wp_safe_redirect( $url );
+                    wp_safe_redirect($url);
                     exit;
 
                 } else {
-                    wp_safe_redirect( home_url() );
+                    wp_safe_redirect(home_url());
                     exit;
-
                 }
             } else {
-                wp_safe_redirect( home_url('account') . '?redirect_to=open-blockly' );
+                wp_safe_redirect(home_url('account') . '?redirect_to=open-blockly');
                 exit;
             }
         }
@@ -73,6 +71,23 @@ class X1Blockly
         spl_autoload_register([$this, 'autoloader']);
 
         add_shortcode('x1-blockly', [$this, 'shortcode']);
+
+        add_action('wp_ajax_x1_blockly_get_cloud_file', [$this, 'getCloudFile']);
+        add_action('wp_ajax_nopriv_x1_blockly_get_cloud_file', [$this, 'getCloudFile']);
+
+        add_action('wp_ajax_x1_blockly_upload_cloud_file', [$this, 'uploadCloudFile']);
+        add_action('wp_ajax_nopriv_x1_blockly_upload_cloud_file', [$this, 'uploadCloudFile']);
+    }
+
+    public function getCloudFile()
+    {
+        $path = $_POST['path'];
+        \X1Blockly\X1YandexCloud::outputFile($path);
+    }
+
+    public function uploadCloudFile()
+    {
+        \X1Blockly\X1YandexCloud::uploadFile();
     }
 
     public function autoloader($className)
